@@ -177,7 +177,8 @@
         !Number.isInteger(audit.qualifying_games) || audit.matched_games > audit.qualifying_games)
       throw new Error("Invalid provisional audit");
     const when = new Date(audit.data_through).toLocaleDateString("en-US", {
-      timeZone: "America/Los_Angeles", year: "numeric", month: "long", day: "numeric"
+      // All public snapshot labels use the UTC date of the validated source timestamp.
+      timeZone: "UTC", year: "numeric", month: "long", day: "numeric"
     });
     const label = "2026 provisional through " + when + " · " +
       audit.matched_games + "/" + audit.qualifying_games +
