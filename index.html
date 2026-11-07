@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f6">
+  <meta name="description" content="Does college football have an attendance problem? Explore reported FBS home attendance since 2001, by school and conference.">
+  <title>Does College Football Have an Attendance Problem?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script>window.__PUBLIC_ATTENDANCE_BUILD__ = true;</script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#explore">Skip to explorer</a>
+<header class="masthead">
+  <div class="brand">COLLEGE FOOTBALL <span> / ATTENDANCE</span></div>
+  <span class="private-pill"><a href="./methodology.html">DATA &amp; METHODOLOGY</a></span>
+</header>
+<main id="explore">
+  <div class="page-intro"><h1>Does College Football Have an Attendance Problem?</h1><p>Explore reported home attendance by school, conference, and era.</p></div>
+  <section class="controls-bar" aria-label="Attendance explorer controls">
+    <label class="field" id="baselineYearField"><span>FROM</span><select id="baselineYear" aria-label="Starting season"></select></label>
+    <span class="comparison-divider" id="comparisonDivider" aria-hidden="true">→</span>
+    <label class="field"><span id="targetYearLabel">TO</span><select id="targetYear" aria-label="Ending season"></select></label>
+    <label class="field focus-field"><span>HIGHLIGHT</span><select id="mapFocusMode" aria-label="Choose school or conference group to highlight">
+      <option value="all">All FBS</option>
+      <option value="conference">Conference</option>
+      <option value="school">School</option>
+      <option value="p5">Historical P5 (2014–2023)</option>
+      <option value="p4">P4 (2024–present)</option>
+      <option value="custom">Custom group</option>
+    </select></label>
+    <label class="field conference-field" id="mapConferenceField" hidden><span>2026 CONFERENCE</span><select id="conferenceFilter" aria-label="Highlight conference based on 2026 membership"><option value="All">Choose conference…</option></select></label>
+    <label class="field school-field" id="mapSchoolField" hidden><span>FOCUS SCHOOL</span><select id="schoolFilter" aria-label="Focus school"><option value="">Choose school…</option></select></label>
+    <div class="map-custom-group" id="mapCustomGroupControls" hidden>
+      <label class="field"><span>ADD SCHOOL</span><select id="mapGroupSchoolFilter" aria-label="Add school to map group"></select></label>
+      <button id="mapAddGroupSchool" type="button" class="text-button">Add</button>
+      <span id="mapGroupChips" class="group-chips" aria-live="polite"></span>
+    </div>
+    <div class="metric-switch" role="group" aria-label="Map metric">
+      <button type="button" class="metric-button active" data-metric="pct" aria-pressed="true">% change</button>
+      <button type="button" class="metric-button" data-metric="absolute" aria-pressed="false">Change / game</button>
+      <button type="button" class="metric-button" data-metric="attendance" aria-pressed="false">Attendance level</button>
+    </div>
+  </section>
+  <p id="mapFocusNote" class="context-note" role="status" hidden></p>
+  <p id="comparisonNotice" class="context-note" role="status"></p>
+
+  <section class="map-layout" aria-label="Geographic attendance explorer">
+    <div class="map-card">
+      <div class="map-topline"><h2 id="mapTitle">Attendance movement</h2><span id="mapRange">2019 → 2025</span></div>
+      <div class="map-stage">
+        <svg id="atlasMap" viewBox="0 0 960 585" role="group" aria-label="Map of FBS attendance changes at 2026 home stadium locations"></svg>
+        <div id="mapTooltip" class="map-tooltip" role="tooltip" hidden></div>
+        <div id="mapSchoolChooser" class="map-school-chooser" role="group" aria-label="Choose a school from overlapping arrows" hidden></div>
+        <div class="map-zoom" aria-label="Map zoom controls">
+          <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+          <button id="zoomOut" type="button" aria-label="Zoom out">−</button>
+          <button id="zoomReset" type="button" aria-label="Reset map zoom">↺</button>
+        </div>
+      </div>
+      <div class="map-footer">
+        <div class="map-legend" aria-label="Map legend">
+          <span class="legend-item"><i class="legend-symbol rise"></i> <span>Increase ↗</span></span>
+          <span class="legend-item"><i class="legend-symbol fall"></i> <span>Decrease ↘</span></span>
+          <span class="legend-item"><i class="legend-symbol unavailable"></i> <span>Unavailable</span></span>
+          <span class="legend-item" id="flatLegendItem"><i class="legend-symbol flat"></i> <span>Essentially unchanged (&lt;1%)</span></span>
+          <span class="legend-item" id="mutedLegendItem" hidden><i class="legend-symbol muted"></i> <span>Other FBS schools</span></span>
+        </div>
+        <span id="mapStatus" class="map-footnote">Loading attendance data…</span>
+      </div>
+      <div class="map-length-key" id="mapLengthKey" aria-label="Examples of arrow length" hidden>
+        <span class="map-length-lead">Example changes:</span>
+        <div class="map-length-samples" id="mapLengthSamples"></div>
+      </div>
+      <p class="legend-explainer" id="markerScaleLegend">Straight arrows: ↗ increase, ↘ decrease; length shows change. Stadium positions use 2026 locations.</p>
+    </div>
+    <aside class="map-sidebar" aria-label="Attendance statistics and school history">
+      <section class="stats-grid" aria-label="Comparison overview">
+    <div class="stat"><span id="comparableLabel">SCHOOLS COMPARED</span><strong id="comparableCount">—</strong><button type="button" id="unchangedCount" class="unchanged-link" hidden></button><span id="unchangedSchools" class="unchanged-list" hidden></span></div>
+    <div class="stat"><span id="medianStatLabel">MEDIAN CHANGE</span><strong id="medianChange">—</strong></div>
+    <div class="stat"><span id="gainStatLabel">UP</span><strong id="gainCount">—</strong><small id="highSchoolName" hidden></small></div>
+    <div class="stat"><span id="lossStatLabel">DOWN</span><strong id="lossCount">—</strong><small id="lowSchoolName" hidden></small></div>
+    <span class="visually-hidden" id="medianLabel"></span>
+  </section>
+
+  <section class="school-card" aria-label="Selected school details" hidden>
+    <div class="school-summary-heading"><h2 id="selectedName"></h2><button type="button" class="conference-link" id="selectedConference" title="Highlight this conference on the map"></button></div>
+    <div class="school-stat"><span id="selectedNowLabel"></span><strong id="selectedNow">—</strong></div>
+    <div class="school-stat"><span id="selectedBeforeLabel"></span><strong id="selectedBefore">—</strong></div>
+    <div class="school-stat"><span id="selectedDifferenceLabel">Change</span><strong id="selectedDifference">—</strong></div>
+    <div class="school-stat" id="selectedCapacityWrap" hidden>
+      <span>LISTED STADIUM CAPACITY</span><strong id="selectedCapacity">—</strong>
+      <small id="selectedCapacityContext"></small>
+      <small><a id="selectedCapacitySource" target="_blank" rel="noopener noreferrer" hidden>Capacity source</a></small>
+    </div>
+    <div class="quick-trend" aria-labelledby="quickTrendTitle">
+      <div class="quick-trend-heading"><span id="quickTrendTitle">Attendance over time</span><a href="#trendTitle" id="quickTrendExpand" hidden>Detailed comparison ↓</a></div>
+      <p id="quickTrendEmpty" hidden>Historical attendance unavailable for this school.</p>
+      <svg id="quickTrendChart" viewBox="0 0 390 145" role="img" aria-label="Selected school's historical attendance trend" hidden></svg><div id="quickTrendTooltip" class="quick-trend-tooltip" role="status" hidden></div>
+    </div>
+    <div class="school-source"><span id="selectedCoverage"></span><a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>Source</a></div>
+    <p id="disruptionNotice" class="disruption-notice" role="note" hidden></p>
+    <p id="annualSpecialNote" class="source-exception" hidden></p>
+    <span id="selectedStadium" class="visually-hidden"></span>
+  </section>
+
+    </aside>
+  </section>
+
+  <!-- Keep comparative superlatives below the map to avoid a tall, asymmetric sidebar. -->
+      <section class="movers-section" id="moversSection" aria-labelledby="moversTitle" hidden>
+        <div class="movers-heading">
+          <h2 id="moversTitle">Key Stats</h2>
+          <div class="mover-type-switch" role="group" aria-label="Rank schools or conferences">
+            <button type="button" class="mover-type-button active" data-mover-type="school" aria-pressed="true">Schools</button>
+            <button type="button" class="mover-type-button" data-mover-type="conference" aria-pressed="false">Conferences</button>
+          </div>
+          <label class="field" id="keyStatsMembershipField" hidden><span>CONFERENCE MEMBERSHIP</span><select id="keyStatsMembership" aria-label="Conference membership basis for key stats">
+            <option value="fixed">2026 school cohorts</option>
+            <option value="historical">Actual members each season</option>
+          </select></label>
+        </div>
+        <p id="moversSubtitle"></p>
+        <div class="mover-list">
+          <button type="button" id="largestRise" class="mover-item"><span class="mover-label">Biggest increase</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
+          <button type="button" id="highestAverage" class="mover-item"><span class="mover-label">Highest attendance</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
+          <button type="button" id="largestFall" class="mover-item"><span class="mover-label">Biggest decrease</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
+          <button type="button" id="lowestAverage" class="mover-item"><span class="mover-label">Lowest attendance</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
+        </div>
+      </section>
+  
+  <section class="trends-section" aria-labelledby="trendTitle" hidden>
+    <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages · no interpolation</span></div>
+    <div class="trend-controls">
+      <label class="field"><span>COMPARE SCHOOL</span><select id="schoolBFilter" aria-label="Compare another school"><option value="">No second school</option></select></label>
+      <label class="field"><span>PRIMARY BENCHMARK</span><select id="conferenceMode" aria-label="Primary benchmark; changes the chart immediately">
+        <option value="historical">School's actual conference, year by year</option>
+        <option value="fixed">2026 conference schools, tracked backward</option>
+        <option value="selected">Chosen conference's actual members, year by year</option>
+        <option value="custom">My custom group, tracked backward</option>
+      </select></label>
+      <label class="field" id="selectedConferenceField" hidden><span>CONFERENCE</span><select id="comparisonConference" aria-label="Historical conference to compare"></select></label>
+      <label class="subtle-check" id="lineageControl" hidden><input type="checkbox" id="conferenceLineage"><span>Follow known predecessor names</span></label>
+      <div class="additional-benchmark-row">
+        <button type="button" id="addBenchmark" class="text-button">+ Add another benchmark</button>
+        <label class="field" id="additionalBenchmarkField" hidden><span>ADDITIONAL BENCHMARK</span>
+          <select id="additionalBenchmarkSelect" aria-label="Choose additional benchmark"><option value="">Choose…</option></select>
+        </label>
+      </div>
+    </div>
+    <div id="customGroupControls" class="custom-group-controls" hidden>
+      <label class="field"><span>ADD TO GROUP</span><select id="groupSchoolFilter" aria-label="School to add to custom group"></select></label>
+      <button type="button" id="addGroupSchool" class="text-button">Add school</button>
+      <div id="groupChips" class="group-chips" aria-live="polite"></div>
+    </div>
+    <div id="benchmarkChips" class="benchmark-chips" aria-label="Active conference benchmarks" aria-live="polite"></div>
+    <p class="trend-membership-note" id="trendMembershipNote" role="status"></p>
+    <div class="chart-key" id="trendSeriesKey" aria-label="Chart series legend"></div>
+    <div class="chart-container">
+      <svg id="trendChart" viewBox="0 0 1050 330" role="img" tabindex="0" aria-label="Historical attendance by school and conference; use arrow keys to inspect seasons"></svg>
+      <div class="trend-tooltip" id="trendTooltip" role="status" aria-live="polite" hidden></div>
+    </div>
+    <p id="trendCoverageNote" class="trend-coverage-note"></p>
+    <div class="trend-stats-wrap">
+      <table class="trend-stats-table" aria-label="Historical attendance comparison statistics">
+        <thead><tr><th scope="col">Series</th><th scope="col">2001</th><th scope="col">2025</th><th scope="col">2026 YTD (provisional)</th><th scope="col">Change</th><th scope="col">Low</th><th scope="col">High</th><th scope="col">25-year avg</th><th scope="col">Seasons</th></tr></thead>
+        <tbody id="trendStatsRows"></tbody>
+      </table>
+    </div>
+    <p id="seasonAvailabilityNote" class="season-availability-note"></p>
+    <span id="lineageHelp" class="visually-hidden"></span>
+  </section>
+
+  <section class="game-details-section" aria-labelledby="gameDetailTitle" hidden>
+    <div class="section-heading"><h2 id="gameDetailTitle">Inside the season</h2><span class="section-subtitle"><a id="gameDetailsSourceLink" href="https://collegefootballdata.com/" target="_blank" rel="noopener noreferrer">CFBD game data</a></span></div>
+    <p id="gameSourceNote" class="game-source-note">Completed regular-season home games, reported by CFBD. These may differ from NCAA credited-home totals.</p>
+    <p id="gameDetailStatus" class="trend-coverage-note" role="status">Loading games…</p>
+    <div id="weeklyTrendWrap" class="weekly-trend-wrap" hidden>
+      <p id="weeklyChartCaption" class="trend-coverage-note">2026 provisional cumulative average by week</p>
+      <div class="game-chart-wrap"><svg id="weeklyAverageChart" viewBox="0 0 1050 178" role="img" aria-label="2026 weekly cumulative reported average"></svg></div>
+    </div>
+    <div class="game-table-wrap"><table class="game-table"><thead><tr>
+      <th scope="col">Game date</th><th scope="col">Opponent</th><th scope="col">Attendance · visual scale</th>
+    </tr></thead><tbody id="gameDetailRows"></tbody></table></div>
+  </section>
+
+  <p class="methodology"><a href="./methodology.html">Data &amp; methodology</a> — full source history, calculations, corrections and known exceptions.</p>
+</main>
+<footer class="site-footer">College football attendance <span>Data sources and definitions in methodology</span></footer>
+</body>
+</html>

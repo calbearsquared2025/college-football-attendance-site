@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f6">
+  <meta name="description" content="How we source, reconcile, calculate and display FBS football attendance.">
+  <title>Data &amp; Methodology — Does College Football Have an Attendance Problem?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./methodology.css">
+</head>
+<body>
+<a class="skip-link" href="#methodology-content">Skip to methodology</a>
+<header class="masthead">
+  <a class="brand methodology-brand" href="./index.html">COLLEGE FOOTBALL <span> / ATTENDANCE</span></a>
+  <nav class="methodology-header-nav" aria-label="Site navigation">
+    <a href="./index.html">Explore attendance</a>
+    <span aria-current="page">Methodology</span>
+  </nav>
+</header>
+<main id="methodology-content" class="methodology-main">
+  <div class="methodology-eyebrow">DATA &amp; METHODOLOGY <span>Updated November 5, 2026 · <span data-ytd-status>2026 data status: provisional</span></span></div>
+  <h1>How we count the crowd</h1>
+  <p class="methodology-deck">This site compares reported FBS football attendance across seasons, schools and conferences. These figures come from several sources with different definitions. This page explains which source we use, the adjustments we made, and where comparisons have limits.</p>
+
+  <nav class="methodology-jumps" aria-label="On this page">
+    <a href="#sources">Sources by season</a><a href="#metrics">What the numbers mean</a><a href="#views">How each view works</a><a href="#adjustments">Adjustments &amp; exceptions</a><a href="#updates">Updates &amp; verification</a>
+  </nav>
+
+  <section class="methodology-intro" aria-labelledby="principle-title">
+    <h2 id="principle-title">The essential distinction</h2>
+    <div class="methodology-principles">
+      <div><span class="principle-index">01 / HISTORICAL ANNUAL</span><h3>School-season totals</h3><p>Published NCAA home-game totals wherever available; clearly attributed archival or CFBD-derived school-season figures for gaps. These power the map, annual trend and group comparisons.</p></div>
+      <div><span class="principle-index">02 / HISTORICAL GAME DETAIL</span><h3>Individual games</h3><p>Separate CollegeFootballData (CFBD) game records power the season bars. They can use different home-game designations and do <em>not</em> have to sum to the annual point above.</p></div>
+      <div><span class="principle-index">03 / CURRENT SEASON</span><h3>2026 reported YTD</h3><p>CFBD supplies the schedule and home/neutral classification; official conference, university and approved opponent reports supply attendance. This is an in-season average, not a final NCAA total.</p></div>
+    </div>
+  </section>
+
+  <section id="sources" class="methodology-section">
+    <span class="section-index">01 / PROVENANCE</span>
+    <h2>Sources by season</h2>
+    <p>We use the strongest school-season records available for each period. We do not relabel reconstructed figures as NCAA-published totals or use an unmarked fallback when a source is missing.</p>
+    <div class="table-scroll" role="region" aria-label="Historical attendance sources by period" tabindex="0">
+      <table class="methodology-table"><thead><tr><th>Season</th><th>Source in annual charts</th><th>Coverage and treatment</th></tr></thead><tbody>
+        <tr><th scope="row">2001–2002</th><td>Original university figures when obtained; otherwise <a href="https://kenn.com/blog/sports-attendance/ncaa-football-attendance/">Kenn's archival transcription</a></td><td>232 school-seasons: five university-original figures and 227 attributed secondary entries. Kenn is <strong>not</strong> represented as NCAA-verified.</td></tr>
+        <tr><th scope="row">2003–2004</th><td><a href="https://s3.amazonaws.com/fs.ncaa.org/Docs/stats/football_records/Attendance/2003.pdf">2003 original NCAA report</a>; <a href="https://ncaanewsarchive.s3.amazonaws.com/2005/Association-wide/football-attendance-holding-steady-despite-fewer-contests---1-31-05-ncaa-news.html">2004 NCAA archival school list</a>; Kenn for remaining 2004 schools</td><td>2003: 117 NCAA records. 2004: 50 NCAA archival school figures plus 68 separately labeled Kenn entries; the available 118-row school set does not reproduce the NCAA national aggregate.</td></tr>
+        <tr><th scope="row">2005–2019</th><td><a href="https://www.ncaa.org/championships/statistics-and-records/football/">NCAA annual FBS school attendance reports</a></td><td>Published credited-home totals/games; 2006 and 2012 entered via reviewed supplements resolving source-table anomalies. Some reclassifying schools lack an official eligible row.</td></tr>
+        <tr><th scope="row">2020</th><td>No comparable official annual series</td><td>Not plotted or estimated. Pandemic-related restrictions make it unsuitable as an ordinary historical benchmark.</td></tr>
+        <tr><th scope="row">2021–2024</th><td><a href="https://collegefootballdata.com/">CFBD</a> games, with documented university-source corrections</td><td>527 of 528 candidate school-seasons qualify: 61 individually verified annual records (B), 466 complete and validation-supported (C). FIU 2021 remains unavailable.</td></tr>
+        <tr><th scope="row">2025</th><td><a href="https://s3.amazonaws.com/fs.ncaa.org/Docs/stats/football_records/Attend.pdf">NCAA official school table</a></td><td>All 136 published school figures used unchanged, despite an unresolved difference from the report's national-summary totals.</td></tr>
+        <tr><th scope="row">2026</th><td>Conference and university game reports, with historical records retained by game ID; CFBD schedule</td><td><strong>Provisional weekly/YTD.</strong> <span data-ytd-status>Latest validated snapshot pending.</span> The NCAA 2026 annual credited-home school report is not yet published. It will supply the final annual comparison after review, not retroactively redefine the weekly game series.</td></tr>
+      </tbody></table>
+    </div>
+    <p class="methodology-small">The historical annual dataset contains 2,975 qualified school-season observations for 2001–2019 and 2021–2025. Coverage represents source-qualified records, not a guarantee that every present-day FBS team was eligible in every prior season. In particular, an official NCAA roster can differ from a modern CFBD FBS classification.</p>
+    <div class="methodology-callout"><strong>Source precedence.</strong> Original published NCAA school figures take priority where available; independently documented university figures supersede a conflicting secondary transcription. For 2021–2024, CFBD originals remain intact and corrections live in a separate, evidence-linked layer. Missing or unqualified records stay missing.</div>
+  </section>
+
+  <section id="metrics" class="methodology-section">
+    <span class="section-index">02 / DEFINITIONS</span>
+    <h2>What we measure</h2>
+    <dl class="methodology-definitions">
+      <div><dt>Reported attendance</dt><dd>The attendance announced or recorded by a source. This is not necessarily a count of people passing through stadium gates; practices may vary by school and season.</dd></div>
+      <div><dt>Annual school average</dt><dd>Total reported attendance for that source's credited home games, divided by its credited home-game count. We retain full-precision ratios for calculations and round only for display.</dd></div>
+      <div><dt>Conference / custom-group average</dt><dd>Combined credited-home attendance across eligible schools divided by their combined credited-home games. This is <strong>game-weighted</strong>, not the simple mean of school averages. A school with eight games contributes eight games to the denominator.</dd></div>
+      <div><dt>Change in attendance</dt><dd>Later season average minus earlier season average (spectators per game); percentage change divides that difference by the earlier season average. We calculate an annual change only when both annual observations are qualified and the baseline is positive. A separate explicitly provisional comparison uses the 2025 full-season average and the 2026 YTD average per game; it is not matched-week year-over-year growth.</dd></div>
+      <div><dt>Biggest/smallest increase or decrease</dt><dd>The school rankings below the map use only schools with qualified completed annual values at both selected endpoints, and only the currently highlighted conference when one is selected. The optional conference ranking uses fixed 2026 conference cohorts at both endpoints (the same schools in both years), not actual historical conference membership; a conference with incomplete qualified observations is omitted. “Biggest increase” means the largest positive change; “smallest increase” means the positive change nearest zero. “Biggest decrease” means the negative change with greatest magnitude; “smallest decrease” means the negative change nearest zero. Rankings follow the map's percentage or spectators/game metric; both measures are shown for context. Exact ties are equivalent.</dd></div>
+      <div><dt>Near-zero change example: 2019 versus 2025</dt><dd>Two schools have almost identical credited-home attendance totals six seasons apart. The <a href="https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/tarletonsports.com/documents/2020/5/29/2019_NCAA_FB_Attendance.pdf">2019 NCAA report</a> lists Boise State at 224,490 across seven home games and Washington at 477,668 across seven; the <a href="https://s3.amazonaws.com/fs.ncaa.org/Docs/stats/football_records/Attend.pdf">2025 NCAA report</a> lists 224,497 and 477,663, respectively, also across seven. Boise State therefore increased by 1.00 spectator per game (+0.003%); Washington declined by 0.71 per game (−0.001%). Published whole-number averages can look unchanged because both inputs are rounded for print, while we calculate from the published totals and game counts. These are mathematically nonzero but <strong>not evidence of a meaningful change</strong>. CFBD's 2025 Washington regular-season game sum is one attendee below the NCAA school total; the annual view follows the NCAA.</dd></div>
+      <div><dt>Large changes and venue changes</dt><dd>Extreme changes deserve a context check, not an automatic data correction. For example, Northwestern&rsquo;s NCAA credited home-game average fell from 37,736 in 2019 to 15,898 in 2025 (−57.9%), but in 2025 the program played primarily in a much smaller <a href="https://nusports.com/news/2024/04/10/northwestern-football-staying-home-with-temporary-enhancements-to-the-lanny-and-sharon-martin-facility-on-lakefront">temporary home venue</a> while Ryan Field was rebuilt. The comparison is numerically correct but <strong>not a like-for-like measure of underlying ticket demand</strong>. In contrast, UConn&rsquo;s large +67.1% gain (18,216 to 30,444 per game) matches the published NCAA school totals, with six credited home games in each year. We retain officially reported values and flag interpretation, rather than silently adjusting venue effects.</dd></div>
+      <div><dt>2025 vs. 2026 YTD change</dt><dd>The master map and selected-school panel can compare the current provisional 2026 reported home-game average with the published 2025 full-season average, using percentage or spectators/game change. The From selector is fixed to 2025 in this mode. It is <strong>not matched-week YoY</strong>: the 2026 schedule is incomplete and the opponent mix can differ. The annual biggest/smallest change rankings remain withheld for 2026. No cumulative 2026 YTD total is annualized.</dd></div>
+      <div><dt>2026 stadium capacity utilization</dt><dd>For 2026 only, reported attendance per home game divided by the stadium's <strong>listed 2026 capacity</strong>, multiplied by 100. Stadium metadata comes from CFBD's <code>GET /teams/fbs?year=2026</code> location record and is saved with our 2026 venue snapshot. A conference ratio is game-weighted: total reported attendees ÷ the sum of each reporting school's listed capacity × reported home games. If a reporting school has no valid capacity, the conference percentage is withheld, not calculated on a biased subset. This is an indicative share of listed capacity, <em>not</em> scanned-seat occupancy.</dd></div>
+      <div><dt>Unavailable vs. zero</dt><dd>A blank, missing, unverified or excluded observation is <strong>not zero</strong>. A reported zero counts only where credible evidence establishes that no spectators were admitted, such as certain Hawai‘i games in 2021.</dd></div>
+    </dl>
+    <div class="formula-box">
+      <span>EXAMPLE · GAME-WEIGHTED GROUP AVERAGE</span>
+      <p>(360,000 attendees over 6 games + 240,000 over 8 games) ÷ (6 + 8 games) = <strong>42,857 per game</strong>.</p>
+      <small>Simply averaging those schools' 60,000 and 30,000 averages would give 45,000—a different, unweighted measure.</small>
+    </div>
+    <h3>Capacity data: current reference, not historical history</h3>
+    <p>Each school card shows a <strong>listed stadium capacity</strong>: we start with CFBD's 2026 venue listing and replace that baseline where a university or venue reference has been independently checked. The source link and note identify overrides. If an official venue change makes a nominal CFBD figure unreliable and the effective capacity cannot be confirmed, we withhold the value. A cited number can be old yet still represent the published nominal configuration: a 2013 Cal Athletics reference reports 62,467 seats, but 2026 UCLA–Cal used a smaller 54,283 game configuration. The number on a stadium card does <strong>not</strong> establish how many tickets were available for a particular game or prove a sellout. We flag individual sellouts only when independently confirmed by a published source and tied to the exact game. Listed capacity is not a verified historical capacity series; renovations, temporary sites and alternate venues require separate review.</p>
+    <p>Audit triggers include conflicting official-versus-CFBD values, old sources, renovations, moves to temporary venues, unusual reported attendance above nominal capacity, and game-specific sellout claims. We retain the source URL, publication date or year, the stadium configuration to which it applies, and a note before overriding CFBD.</p>
+    <h3>Which games count?</h3>
+    <p>For NCAA-origin annual years, we use the NCAA's <em>published credited-home</em> accounting, not a reconstructed list based solely on stadium location or a CFBD home/neutral flag. Games at alternate venues and unusual postseason credits may be classified differently across sources.</p>
+    <p>For the reconstructed 2021–2024 annual years, the project reviews each historical FBS school's credited-home schedule, includes FCS opponents where appropriate, and records game-specific evidence for alternate venues and exceptional postseason credit. This includes 2024 campus CFP first-round games and one separately substantiated 2021 Michigan State postseason credit. We do <strong>not</strong> apply a blanket “all postseason in” or “all postseason out” rule to those reconstructed annual totals.</p>
+    <p>By contrast, the <strong>individual-game table and inline bars</strong> deliberately show completed, regular-season, non-neutral, CFBD home-designated games only. It omits bowls/postseason and neutral-site contests—even if another source credits one to a school. Historical game-table figures therefore may not reproduce the annual line.</p>
+  </section>
+
+  <section id="views" class="methodology-section">
+    <span class="section-index">03 / INTERPRETATION</span>
+    <h2>How the site uses the data</h2>
+    <div class="table-scroll" role="region" aria-label="Methodology by visualization" tabindex="0">
+      <table class="methodology-table"><thead><tr><th>View</th><th>What is plotted</th><th>Important boundary</th></tr></thead><tbody>
+        <tr><th scope="row">Attendance level circles</th><td>One selected season's reported home attendance per game. Larger circles represent higher values; no starting year is needed.</td><td>Circle radius is a visual aid, not a literal scale of stadium size. Values at or above 110,000 share the maximum symbol size; exact numbers remain available on hover. Positions use 2026 stadium locations.</td></tr>
+        <tr><th scope="row">Map arrows</th><td>Change between qualified annual school averages, or the separately labeled 2025 full-season versus provisional 2026 YTD per-game averages; direction signals rise or fall and length signals magnitude. Hover details identify both selected years, their attendance averages, and the source year.</td><td>Uses the school's <strong>2026 stadium location</strong>, not its historical location. Arrow size uses a fixed nonlinear scale with caps of 100% or 50,000 spectators/game; not a distance or direction of travel. The 2026 change arrows are explicitly provisional and are not final-season rankings.</td></tr>
+        <tr><th scope="row">School trend</th><td>Annual attendance per credited home game; 2026 can appear as a distinctly provisional endpoint. The school-only timeline stays inside the selected-school card beside the map, with full comparison below; the timeline always spans all available seasons regardless of the map's From/To selections.</td><td>Years are connected with straight segments only where data qualify; no smoothing, gap-filling, historical capacity normalization or inflation adjustment.</td></tr>
+        <tr><th scope="row">Conference comparison</th><td>Game-weighted average of eligible conference members</td><td><em>School's actual conference</em> follows where that school played each season: for Cal, historically branded Pac-10/Pac-12 blues through 2023, then ACC blue from 2024. <em>Chosen conference's historical members</em> means actual members in each year: ACC 2009 uses the 2009 ACC teams and ACC 2025 uses 2025 ACC teams, not the same cohort. <em>2026 cohort</em> tracks the identical 2026 conference schools backward through all seasons, regardless of their former affiliations, and retains the current conference color. Incomplete group-years are withheld.</td></tr>
+        <tr><th scope="row">P5 / P4 map groups</th><td>Historical Power Five and current Power Four cohort highlights</td><td>“Historical P5” means ACC, Big Ten, Big 12, Pac-10/Pac-12 and SEC membership in the <strong>selected starting season, 2014–2023</strong>; those same schools are followed through the comparison. “P4” means ACC, Big Ten, Big 12 and SEC members in the <strong>selected ending season, 2024 onward</strong>, followed backward. Attendance level uses the displayed single season as its reference. The reconstituted 2026 Pac-12 is a separate conference, not part of P4. Ineligible eras are disabled rather than silently reclassified.</td></tr>
+        <tr><th scope="row">Conference lineage</th><td>Optional successor-name continuity for Pac-10 → Pac-12 (2011) and Big East → American (2013)</td><td>Uses actual members each season. It does not treat other former conferences (e.g., WAC → Mountain West) as automatic predecessors.</td></tr>
+        <tr><th scope="row">Custom group</th><td>Game-weighted average of selected schools by season</td><td>Only qualified, eligible school-years; no phantom zeros for programs not yet FBS.</td></tr>
+        <tr><th scope="row">Statistics table</th><td>Selected years, change, historical low/high, combined historical average and number of available seasons</td><td>“Seasons 24/25” means 24 usable annual observations over the 25 calendar years 2001–2025, not 24 games. For California the omitted year is 2020, excluded due pandemic spectator restrictions. Other programs may have additional missing or ineligible years. The “25-year avg” uses only qualified available years, weighted by credited home games—not imputed data. Provisional 2026 is never included in the 25-year summary.</td></tr>
+        <tr><th scope="row">Inside the season (private research view only)</th><td>Historical CFBD individual-game figures and 2026 separately sourced game records and cumulative school-week averages</td><td>These detail feeds are not published in the public static preview because full season-level game records and reconstructable weekly school sequences would create redistribution concerns. Public views retain annual and 2026 YTD school/conference summaries. In the private view, a “Sellout” label requires explicit official university confirmation, never stadium capacity alone.</td></tr>
+      </tbody></table>
+    </div>
+    <p>Missing school-years break a series; missing members withhold the relevant conference or group observation. A partial conference average is not presented as though the full membership were represented. School colors approximate team branding. Conference benchmark colors follow historical conference logo and brand hues, with distinct colors for Pac-10 and Pac-12 eras and for Big East and American eras. Light hues are darkened slightly where necessary for chart readability. Colors indicate visual identity, not data source or confidence.</p>
+    <p>Public GitHub Pages publication uses a restricted build of derived school-season and conference summaries. The browser receives no SQLite database, private source files, full historical games, or API credentials. The private research view retains the withheld individual-game and weekly school sequences for validation.</p>
+  </section>
+
+  <section id="disruptions" class="methodology-section">
+    <span class="section-index">04 / CONTEXT, NOT CORRECTIONS</span>
+    <h2>Attendance disruptions: venue, capacity and spectator limits</h2>
+    <p>Some reported attendance changes reflect restrictions on <em>how many fans could attend</em> rather than changes in fan demand. We retain the original source-qualified annual averages, but attach small contextual notes to affected map comparisons, school trend points and ranked school changes. Amber rings on school charts indicate the <strong>start</strong> of a documented event, not an adjusted value. This is a curated initial set, not a comprehensive stadium-history database.</p>
+    <p>For comparisons, a temporary venue or legal attendance restriction is flagged only if a selected endpoint falls in the affected season(s). A lasting venue or capacity change is flagged when the selected range crosses its effective year. Merely passing through an abnormal season between two normal endpoints does not taint the endpoint comparison. Conference superlatives remain unadjusted aggregates; the school-level annotations do not imply a corrected conference average.</p>
+    <ul>
+      <li><strong>Hawaiʻi:</strong> In 2021, no fans were admitted to the first three home games, 1,000 were permitted at the fourth, and full crowds resumed November 6. The team also moved from Aloha Stadium to the much smaller Ching Complex in 2021, which expanded from approximately 9,000 seats to over 15,000 before 2023. <a href="https://hawaiiathletics.com/news/2021/11/1/football-warriors-host-aztecs-in-first-full-capacity-crowd-at-ching-complex.aspx">2021 restrictions ↗</a> · <a href="https://hawaiiathletics.com/sports/2025/7/9/clarence-t-c-ching-athletics-complex.aspx">venue and capacity ↗</a></li>
+      <li><strong>Northwestern:</strong> Temporary lakefront home venue during Ryan Field redevelopment, 2024–2025. <a href="https://news.northwestern.edu/stories/2024/05/campus-construction-projects-begin-this-summer">Northwestern University ↗</a></li>
+      <li><strong>Kansas:</strong> Home games split between Children's Mercy Park and Arrowhead Stadium in 2024; returned to a renovated Memorial Stadium in 2025 at a stated 41,525-seat capacity. <a href="https://kuathletics.com/news/2024/5/8/kansas-football-to-play-2-games-at-childrens-mercy-park-4-at-arrowhead-stadium-in-2024">2024 venues ↗</a> · <a href="https://kuathletics.com/news/2025/8/20/football-kansas-athletics-announces-sellout-for-season-opener-vs-fresno-state">2025 capacity ↗</a></li>
+      <li><strong>California:</strong> Hosted its 2011 home football games at AT&amp;T Park while Memorial Stadium was renovated. <a href="https://calbears.com/sports/2010/5/10/207753054">Cal Athletics ↗</a></li>
+      <li><strong>San Diego State:</strong> Played the 2021 home season in Carson and opened Snapdragon Stadium in 2022. <a href="https://goaztecs.com/news/2020/09/15/fb-to-play-at-dignity-health-sports-park-in-2021">2021 venue ↗</a> · <a href="https://goaztecs.com/news/2020/10/15/snapdragon-stadium">2022 stadium ↗</a></li>
+    </ul>
+    <p>Current listed stadium capacity is <strong>not</strong> applied retroactively. Physical seats, legally permitted attendance and reported attendance are separate measures. Context flags do not change official figures or independently establish that a change was caused by stadium conditions.</p>
+  </section>
+
+  <section id="adjustments" class="methodology-section">
+    <span class="section-index">05 / AUDIT TRAIL</span>
+    <h2>Adjustments and known exceptions</h2>
+    <p>These are the consequential changes and unresolved disagreements behind the charts. We preserve the source value and its evidence rather than silently rewriting the originating dataset.</p>
+    <div class="exception-list">
+      <article><div class="exception-year">2001</div><div><h3>California corrected to its university record</h3><p>Cal's original school-reported total is <strong>200,655 across six games</strong> (33,442.5 per game), replacing Kenn's transcribed 180,736. Kenn's figure remains in the private discrepancy record. Four additional 2001–2002 school rows use verified Georgia or Ohio State publications.</p></div></article>
+      <article><div class="exception-year">2003–04</div><div><h3>Original NCAA rows override secondary transcriptions</h3><p>All 117 rows in the 2003 original NCAA table are preferred. In 2004, 50 original NCAA archival school rows supersede secondary rows, including four conflicting values; the remaining 68 are Kenn-attributed. The 2004 recovered school set totals <strong>669 games / 30,256,163</strong> versus the NCAA national report's <strong>672 / 30,337,237</strong>. Program identity around reclassification (including FIU/Florida Atlantic) is also unresolved; no artificial reconciliation is imposed.</p></div></article>
+      <article><div class="exception-year">2006</div><div><h3>Louisiana–Monroe printed-average inconsistency</h3><p>The NCAA table lists five games and 111,564 total attendees, but prints an average of 18,594. We calculate <strong>22,312.8</strong> from the verified count and total (displayed as 22,313); five original gamebooks corroborate the total. The printed value is retained in source metadata.</p></div></article>
+      <article><div class="exception-year">2012</div><div><h3>Duplicate NCAA school rows resolved</h3><p>Seven schools appear twice in the source PDF; one line for each repeats its 2011 tuple. We selected the proper 2012 records after comparing the original report and national totals. Three previously selected stale values were replaced: Washington, Washington State and West Virginia.</p></div></article>
+      <article><div class="exception-year">2015</div><div><h3>LSU / South Carolina national-only exception</h3><p>Flooding moved South Carolina's home-designated game to LSU. Its <strong>42,058</strong> attendees appear in the NCAA national home aggregate but not LSU's school-home table. We do not add it to LSU's annual school average.</p></div></article>
+      <article><div class="exception-year">2021–24</div><div><h3>CFBD reconstruction, source corrections and quarantine</h3><p>We retain the original CFBD game files but use an evidence-linked correction layer: <strong>65 record-level attendance corrections</strong> across the four years, including null fills and three changed non-null figures. We review designated home games played at alternate sites. Hawai‘i's three 2021 attendance zeros are supported by its no-spectator policy; FIU's three missing and three suspect-zero 2021 home games are not, so its season stays unavailable. Of 528 candidate school-seasons, 527 qualify (61 individually verified and 466 validation-supported, not individually certified).</p></div></article>
+      <article><div class="exception-year">2025</div><div><h3>NCAA national-summary mismatch is still open</h3><p>The 136 NCAA school rows sum to <strong>881 games / 36,800,758 attendees</strong>; the same report's national summary says <strong>882 / 36,867,987</strong>—one game and 67,229 attendees more. A Washington–Purdue box score has 67,229 attendance, but the game is already included in Washington's seven-game school row; it is <em>not</em> an established explanation. We use the published school rows unchanged and do not call their sum the NCAA's national total. An NCAA clarification has been requested.</p></div></article>
+      <article><div class="exception-year">2026</div><div><h3>Provisional school reports and missing/contradictory records</h3><p>CFBD identifies completed home games but has no usable positive crowds in the current raw 2026 snapshot, so we overlay separately cited university/conference reports. Previously validated crowds are preserved with their original URLs and no stale visitor-game pages are re-fetched. UL Monroe reports <strong>13,211</strong> for Southeastern Louisiana while a visitor report displays zero; the host figure is retained. San Diego State's November 1 university season-statistics report supplies <strong>19,184</strong> against Washington State on October 31, which its conference feed omitted. A completed-game match rate is not NCAA season certification.</p></div></article>
+    </div>
+    <div class="methodology-callout"><strong>Historical game-data quarantine.</strong> CFBD individual-game attendance for 2004, 2005, 2009, 2010 and 2011 has known false-zero problems; those bars are withheld rather than displaying false empty stadiums. This does not suppress independently qualified annual records for the same years.</div>
+  </section>
+
+  <section id="updates" class="methodology-section">
+    <span class="section-index">06 / MAINTENANCE &amp; SOURCES</span>
+    <h2>Current season, refreshes and verification</h2>
+    <p>For 2026, the weekly series combines CFBD's completed-game schedule with nine official conference game-statistics feeds, university season statistics in HTML or current linked PDF form, and preserved older game-level source citations. Archived Towson, The Citadel, Mercyhurst and Central Michigan source records remain attributed but are not searched again on every refresh. When a conference page omits a game, a current university season report may supply its attendance. Each accepted game carries a specific source URL.</p>
+    <p>Reported games are matched to completed CFBD schedule records by game identity, opponent and date, subject to strict home/neutral/regular-season eligibility. Unmatched, changed, zero or contradictory reports are flagged. The ingestion does not replace previously verified values without review. A game with no qualifying crowd remains missing, and no future game is projected.</p>
+    <p><strong>Refresh status:</strong> <span data-ytd-status>2026 provisional snapshot: loading current data status.</span> The private combined CFBD/official refresh is guarded by prior-game continuity, game-level matching, new-game coverage and offline regression tests; automatic scheduling is not yet enabled. A missing game's attendance remains unavailable rather than zero.</p>
+    <h3>When 2026 becomes final</h3>
+    <p><strong>Weekly and per-game reports remain provisional as a distinct regular-season-only series.</strong> Following the season and postseason, we will retrieve and validate the NCAA's actual 2026 <em>annual FBS school attendance table</em>, when published. Its credited-home-game counts and reported attendance totals will become the authoritative 2026 annual school averages used for historical map/trend/conference comparisons. That transition requires a separate NCAA source audit and deliberate release; it is not triggered merely by the calendar or an updated game report.</p>
+    <p>The NCAA's credited-home definition may include or exclude certain neutral-site, playoff or postseason games differently from our CFBD regular-season non-neutral filter. We therefore <strong>do not force the weekly game totals to reconcile</strong> with the future annual NCAA figures and do not automatically add postseason games to the weekly series. Any difference is documented at the view level and on this methodology page.</p>
+    <h3>Quality controls</h3>
+    <ul>
+      <li>Source-linked season rows; unique school and game identifiers; original values retained; documented school-name crosswalks and source-file fingerprints.</li>
+      <li>NCAA annual game/attendance reconciliation and targeted primary-document verification; 2006, 2012, 2015 and 2025 source exceptions explicitly accounted for.</li>
+      <li>For 2021–2024: 56 randomly stratified school-season samples, of which 40 were independently checked; three original exact-value errors were corrected in a separate record. Category C is validation-supported, <em>not</em> individually certified.</li>
+      <li>For 2026: previous-game continuity, source-coverage thresholds, missing-report checks and automated regression tests; failures retain the previous validated private snapshot.</li>
+    </ul>
+    <h3>Original and secondary references</h3>
+    <ul class="methodology-references">
+      <li><a href="https://www.ncaa.org/championships/statistics-and-records/football/">NCAA Football Statistics &amp; Records</a> — original annual FBS school attendance and national summaries.</li>
+      <li><a href="https://collegefootballdata.com/">CollegeFootballData (CFBD)</a> — historical individual games and identity/schedule metadata. <a href="https://api.collegefootballdata.com/data-availability">Coverage documentation</a> · <a href="https://collegefootballdata.com/terms">Terms</a>.</li>
+      <li><a href="https://kenn.com/blog/sports-attendance/ncaa-football-attendance/">Kenn.com: NCAA Football Attendance</a> — explicitly secondary 2001–2002 and 2004 transcription where original school rows were unavailable.</li>
+      <li><a href="https://calbears.com/sports/2013/4/17/208197765">California 2001 university record</a> · <a href="https://s3.amazonaws.com/fs.ncaa.org/Docs/stats/football_records/Attendance/2006.pdf">NCAA 2006 source</a> · <a href="https://s3.amazonaws.com/fs.ncaa.org/Docs/stats/football_records/Attendance/2012.pdf">NCAA 2012 source</a> · <a href="https://lsusports.net/news/2015/10/10/210412013">LSU 2015 explanation</a>.</li>
+    </ul>
+    <p class="methodology-small">This site is an independent visual research project, not an NCAA- or CFBD-certified publication. Source records and verification notes remain private. The public static build contains only derived display summaries, not a full game feed or bulk-data mirror. The design reduces redistribution risk but does not imply that licensing risk is eliminated.</p>
+  </section>
+  <div class="methodology-bottom"><a href="./index.html">← Return to the explorer</a><span>College football attendance · Methodology v1.0</span></div>
+</main>
+<footer class="site-footer">College football attendance <span>Independent research · source-attributed data</span></footer>
+<script type="module">
+  const nodes = document.querySelectorAll("[data-ytd-status]");
+  try {
+    const response = await fetch("./data/freshness.json", {cache: "no-store"});
+    if (!response.ok) throw new Error("Audit not accessible");
+    const audit = await response.json();
+    if (audit.season_status !== "provisional" || !Number.isInteger(audit.matched_games) ||
+        !Number.isInteger(audit.qualifying_games) || audit.matched_games > audit.qualifying_games)
+      throw new Error("Invalid provisional audit");
+    const when = new Date(audit.data_through).toLocaleDateString("en-US", {
+      timeZone: "America/Los_Angeles", year: "numeric", month: "long", day: "numeric"
+    });
+    const label = "2026 provisional through " + when + " · " +
+      audit.matched_games + "/" + audit.qualifying_games +
+      " completed home-game crowds verified" +
+      (audit.missing_games ? " · " + audit.missing_games + " missing" : "");
+    nodes.forEach(node => {node.textContent = label;});
+  } catch {
+    nodes.forEach(node => {node.textContent = "2026 provisional YTD · latest audit unavailable";});
+  }
+</script>
+</body>
+</html>
