@@ -50,6 +50,8 @@ let membershipRows = [];
 let ytdThrough = null;
 let pilotGames = [];
 let pilotWeekly = [];
+let publicWeeklySchool = new Map();
+let publicWeeklyConference = new Map();
 let disruptionRows = [];
 let verifiedSellouts = new Map();
 let availableYears = [];
@@ -1352,18 +1354,27 @@ function renderTrendChart() {
 function renderPilotWeeklyChart(schoolId,year) {
   const wrap=$("weeklyTrendWrap"),svg=d3.select("#weeklyAverageChart");
   svg.selectAll("*").remove();
-  const all=year===2026 ? pilotWeekly.filter(r=>Number(r.school_id)===schoolId) : [];
+  const school=cohort.find(s=>Number(s.school_id)===schoolId);
+  const all=year!==2026 ? [] : PUBLIC_BUILD
+    ? (publicWeeklySchool.get(schoolId)||[]).map(([week,average])=>({week,average_reported_attendance:average}))
+    : pilotWeekly.filter(r=>Number(r.school_id)===schoolId);
+  const conf=school?.conference_2026;
+  const confPoints=PUBLIC_BUILD && year===2026
+    ? (publicWeeklyConference.get(conf)||[]).map(([week,average])=>({week,average})) : [];
   const palette=teamPalette(schoolId);
-  const points=all.filter(r=>Number(r.reported_home_games)>0).map(r=>({
+  // Public weekly chart records intentionally omit exact source-game counts.
+  const points=(PUBLIC_BUILD?all:all.filter(r=>Number(r.reported_home_games)>0)).map(r=>({
     week:Number(r.week),average:Number(r.average_reported_attendance),
-    reported:Number(r.reported_home_games),completed:Number(r.completed_home_games),
+    reported:PUBLIC_BUILD?null:Number(r.reported_home_games),
+    completed:PUBLIC_BUILD?null:Number(r.completed_home_games),
   })).filter(r=>Number.isFinite(r.average)).sort((a,b)=>a.week-b.week);
   wrap.hidden=!points.length;
   if (!points.length) return;
   const width=1050,height=178,margin={top:24,right:95,bottom:33,left:68};
-  const min=d3.min(points,d=>d.average),max=d3.max(points,d=>d.average);
+  const values=[...points,...confPoints];
+  const min=d3.min(values,d=>d.average),max=d3.max(values,d=>d.average);
   const pad=Math.max(1800,(max-min)*.22);
-  const x=d3.scaleLinear().domain([0,d3.max(all,d=>Number(d.week))||8])
+  const x=d3.scaleLinear().domain([0,d3.max([...all,...confPoints],d=>Number(d.week))||8])
     .range([margin.left,width-margin.right]);
   const y=d3.scaleLinear().domain([Math.max(0,min-pad),max+pad])
     .range([height-margin.bottom,margin.top]);
@@ -1377,13 +1388,28 @@ function renderPilotWeeklyChart(schoolId,year) {
   svg.selectAll("circle").data(points).join("circle")
     .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average)).attr("r",3.8)
     .attr("fill",palette.primary).attr("stroke",palette.primary).attr("stroke-width",1.1)
-    .append("title").text(d=>`Week ${d.week}: ${attendanceFormat(d.average)} / game · ${d.reported} reported of ${d.completed}`);
+    .append("title").text(d=>PUBLIC_BUILD
+      ? `Week ${d.week}: about ${attendanceFormat(d.average)} / game · cumulative, rounded to nearest 500 · provisional`
+      : `Week ${d.week}: ${attendanceFormat(d.average)} / game · ${d.reported} reported of ${d.completed}`);
+  if(PUBLIC_BUILD && confPoints.length) {
+    const benchmarkColor=conferenceColor(conf);
+    svg.append("path").datum(confPoints).attr("fill","none")
+      .attr("stroke",benchmarkColor).attr("stroke-width",1.8).attr("stroke-dasharray","5 4")
+      .attr("d",d3.line().x(d=>x(d.week)).y(d=>y(d.average)));
+    svg.selectAll(".weekly-conference-dot").data(confPoints).join("circle")
+      .attr("class","weekly-conference-dot")
+      .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average)).attr("r",2.3)
+      .attr("fill",benchmarkColor)
+      .append("title").text(d=>`${conf} · week ${d.week}: about ${attendanceFormat(d.average)} / game · cumulative game-weighted, rounded · provisional`);
+  }
   const last=points.at(-1);
   svg.append("text").attr("x",x(last.week)+9).attr("y",y(last.average)+4)
     .attr("fill",palette.primary).attr("font-size",12).attr("font-weight",600)
-    .text(attendanceFormat(last.average));
-  svg.attr("aria-label",`2026 weekly cumulative official-conference attendance average for ${cohort.find(s=>Number(s.school_id)===schoolId)?.school_name}; provisional`);
-  $("weeklyChartCaption").textContent="2026 cumulative average by week · provisional regular-season reports; NCAA final annual pending";
+    .text((PUBLIC_BUILD?"≈":"")+attendanceFormat(last.average));
+  svg.attr("aria-label",`2026 weekly cumulative attendance average for ${school?.school_name}${PUBLIC_BUILD?`, with ${conf} conference comparison; rounded to nearest 500`:""}; provisional`);
+  $("weeklyChartCaption").textContent=PUBLIC_BUILD
+    ? `2026 cumulative average by week · rounded to nearest 500 fans/game · dashed ${conf} benchmark is game-weighted · provisional`
+    : "2026 cumulative average by week · provisional regular-season reports; NCAA final annual pending";
 }
 
 const HOME_GAME_TIMEZONES = {
@@ -1433,12 +1459,17 @@ async function renderCfbdGameDetails() {
   $("weeklyTrendWrap").hidden=true;
   d3.select("#weeklyAverageChart").selectAll("*").remove();
   if (PUBLIC_BUILD) {
-    $("gameDetailTitle").textContent=`${name} · inside the season`;
-    $("gameDetailStatus").textContent="Individual-game tables and weekly school-level sequences remain in the private research view; annual and 2026 provisional summaries are shown above.";
-    $("gameDetailsSourceLink").href="./methodology.html#source-details";
+    $("gameDetailTitle").textContent=year===2026?`${name} · 2026 weekly attendance`:`${name} · inside the season`;
+    $("gameDetailStatus").textContent=year===2026
+      ? "School and conference cumulative weekly trends are displayed in rounded form; exact individual-game records remain private."
+      : "Historical individual-game records remain in the private research view; annual summaries are shown above.";
+    $("gameDetailsSourceLink").href="./methodology.html#views";
     $("gameDetailsSourceLink").textContent="Source methodology";
-    $("gameSourceNote").textContent="Public display limited to derived attendance summaries; no individual-game feed is published.";
+    $("gameSourceNote").textContent=year===2026
+      ? "2026 provisional official university/conference reports, reconciled against CFBD home schedules. Weekly points are rounded, not game records."
+      : "Public display limited to derived annual summaries; no individual-game feed is published.";
     section.querySelector(".game-table-wrap").hidden=true;
+    renderPilotWeeklyChart(schoolId,year);
     return;
   }
   if ([2004,2005,2009,2010,2011].includes(year)) {
@@ -1527,7 +1558,9 @@ async function bootPublic() {
   const data = await d3.json("./data/summary.json");
   if (data?.schema_version !== 1 || !Array.isArray(data.schools) ||
       data.schools.length < 2500 || !Array.isArray(data.memberships) ||
-      !data.freshness?.data_through || data.freshness.status !== "provisional")
+      !data.freshness?.data_through || data.freshness.status !== "provisional" ||
+      data.weekly_2026?.round_to_nearest !== 500 ||
+      !Array.isArray(data.weekly_2026.schools) || !Array.isArray(data.weekly_2026.conferences))
     throw new Error("Validated public attendance summary is missing or incomplete");
   const mapData = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json").catch(()=>null);
   membershipRows = data.memberships;
@@ -1541,6 +1574,8 @@ async function bootPublic() {
   verifiedCapacities = new Map(data.capacities.map(row=>[Number(row.school_id),row]));
   disruptionRows = data.disruptions.map(normalizeDisruption);
   ytdThrough = data.freshness.data_through;
+  publicWeeklySchool = new Map(data.weekly_2026.schools.map(r=>[Number(r.school_id),r.points]));
+  publicWeeklyConference = new Map(data.weekly_2026.conferences.map(r=>[r.conference,r.points]));
   schoolIndex = schoolYearIndex(schools);
   if (cohort.length < 130 || locations.size < 130 ||
       conferenceRows.length < 20 || historicalConferenceRows.length < 20 ||
