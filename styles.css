@@ -104,7 +104,8 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .school-stat--change{grid-column:1/-1}
 .school-stat span{font-size:10px;color:var(--soft)}
 .school-stat strong{font-size:19px;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
-.school-source{display:flex;grid-column:1/-1;gap:.35em;align-items:center;color:var(--soft);font-size:11px;max-width:none}
+.school-sources{display:flex;flex-direction:column;gap:3px;grid-column:1/-1}
+.school-source{display:flex;gap:.35em;align-items:center;color:var(--soft);font-size:11px;max-width:none}
 .school-source a{white-space:nowrap}
 .school-source[hidden]{display:none}
 .source-exception{grid-column:1/-1;font-size:11px;color:#6b6660;margin:0}
@@ -144,11 +145,12 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .game-table-wrap{overflow-x:auto}
 .game-table{border-collapse:collapse;width:100%;font-size:12px;text-align:left}
 .game-table th{font-size:10px;font-weight:700;letter-spacing:.07em;color:#6a777b;border-bottom:1px solid var(--rule);padding:7px 9px}
-.game-table td{border-bottom:1px solid #e8eae6;padding:7px 9px;font-variant-numeric:tabular-nums}
+.game-table td{border-bottom:1px solid #e8eae6;padding:5px 8px;font-variant-numeric:tabular-nums}
+.game-date-cell{white-space:nowrap}
 .game-table tr:hover td{background:#f0f2ed}
 .game-attendance-cell{display:flex;align-items:center;gap:13px}
 .game-attendance-number{min-width:70px;text-align:right;font-weight:600}
-.game-source-link{display:block;width:max-content;margin-top:3px;font-size:10px}
+.game-source-link{display:block;width:max-content;margin-top:1px;font-size:10px}
 .game-sellout-badge{display:inline-flex;align-items:center;flex-shrink:0;white-space:nowrap;border:1px solid #a8cbc0;border-radius:3px;padding:2px 6px;color:#216759;background:#edf5f1;text-decoration:none;font:600 10px/1.2 "DM Sans",Arial,sans-serif}
 .game-sellout-badge:hover{background:#dcefe7;text-decoration:underline}
 .game-bar-track{flex:1;min-width:70px;max-width:360px;height:9px;background:#ecefeb;position:relative;border-radius:1px}
@@ -236,7 +238,6 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
  .school-card{gap:12px}
  .school-summary-heading{width:100%}
  .school-stat{min-width:75px}
- .school-source{flex-basis:100%;max-width:none}
  .trend-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
  .trend-controls .field{min-width:0;max-width:none}
  .additional-benchmark-row{grid-column:1/-1}

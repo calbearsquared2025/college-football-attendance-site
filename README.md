@@ -1,4 +1,4 @@
-# The United States of Football
+# The United States of College Football
 
 Public preview: https://calbearsquared2025.github.io/college-football-attendance-site/
 

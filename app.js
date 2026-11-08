@@ -58,6 +58,13 @@ let verifiedCapacities = new Map();
 let verifiedAnnualYears = new Set();
 let membershipRows = [];
 let ytdThrough = null;
+function ytdDataThroughLabel() {
+  if (!ytdThrough) return null;
+  const date=new Date(ytdThrough);
+  return Number.isNaN(date.getTime())?null:date.toLocaleDateString("en-US",{
+    month:"short",day:"numeric",year:"numeric",timeZone:"UTC"
+  });
+}
 let pilotGames = [];
 let pilotWeekly = [];
 let publicWeeklySchool = new Map();
@@ -745,7 +752,7 @@ function renderSchoolCard() {
   const level=state.metric==="attendance";
   $("selectedBefore").parentElement.hidden=level;
   $("selectedDifference").parentElement.hidden=level;
-  $("selectedNowLabel").textContent = state.target === 2026 ? "2026 YTD provisional average" : `${state.target} average`;
+  $("selectedNowLabel").textContent = state.target === 2026 ? "2026 YTD average" : `${state.target} average`;
   $("selectedNow").textContent = attendanceFormat(after?.average_reported_attendance);
   $("selectedBeforeLabel").textContent = `${state.target===2026?2025:state.baseline} average`;
   $("selectedBefore").textContent = attendanceFormat(before?.average_reported_attendance);
@@ -897,16 +904,16 @@ function renderMovers() {
       state.conference=row.conference;state.mapFocus="conference";state.schoolId=null;render();
     }:()=>selectSchool(row.school.school_id);
   }
-  const membershipText=conferences
+  const scope=conferences
     ? state.keyStatsMembership==="historical"
-      ? "actual membership in each season (realignment changes group composition)"
-      : "fixed 2026 conference cohorts, tracked backward"
-    : state.mapFocus==="p5"?"historical P5 cohort"
+      ? "Actual conference members by year"
+      : "Fixed 2026 conference members"
+    : state.mapFocus==="p5"?"Historical P5 cohort"
     : state.mapFocus==="p4"?"P4 cohort"
-    : state.mapFocus==="conference"?"Conference: "+state.conference+" (2026)"
-    : state.mapFocus==="custom"?"custom group":"All FBS";
-  $("moversSubtitle").textContent=`${state.target===2026?"2026 YTD (provisional)":state.target} · ${membershipText} · ${conferences?"conference game-weighted averages":"school averages"}`+
-    (level?"":` · changes since ${state.baseline}`);
+    : state.mapFocus==="conference"?`${state.conference} · 2026 members`
+    : state.mapFocus==="custom"?"Custom group":"";
+  $("moversSubtitle").textContent=scope;
+  $("moversSubtitle").hidden=!scope;
 }
 
 // Independent conference overview using the same validated aggregates as Key Stats.
@@ -979,14 +986,14 @@ function renderConferenceComparison() {
     rows.append(tr);
   }
   $("conferenceComparisonSubtitle").textContent=level
-    ? "Reported spectators per home game · "+label(toYear)
-    : label(fromYear)+" vs. "+label(toYear)+" · reported spectators per home game";
+    ? label(toYear)+" · spectators/game"
+    : label(fromYear)+" → "+label(toYear)+" · spectators/game";
   $("conferenceComparisonNote").textContent=
     (historical
-      ? "Actual conference membership in each season. Realignment changes the schools included; former and successor league names are separate."
-      : "The same 2026 conference school groups are tracked backward through the selected seasons.")+
-    " Conference averages are weighted by reported home games; unavailable or incomplete figures are shown as —."+
-    (toYear===2026?" *2026 YTD is provisional and compared with a full prior season.":"");
+      ? "Actual conference members each year (realignment included)."
+      : "Fixed 2026 conference membership across seasons.")+
+    " — means unavailable."+
+    (toYear===2026?" *2026 YTD is provisional.":"");
 }
 
 function renderStats() {
@@ -1027,8 +1034,9 @@ function renderStats() {
     $("medianLabel").textContent=`Comparable programs · ${state.baseline}–${state.target}${state.target===2026?" YTD provisional":""}`;
   }
   $("comparisonNotice").hidden=state.target!==2026;
+  const dataThrough=ytdDataThroughLabel();
   $("comparisonNotice").textContent=state.target===2026
-    ? `2026 YTD · provisional reports through ${ytdThrough?.slice(0,10)??"latest update"}${levelMode?"":" · versus 2025 full season (not matched-week)"}.`
+    ? `2026 YTD (provisional)${levelMode?"":" vs. full-year 2025"}${dataThrough?` · Data through ${dataThrough}`:""}.`
     : "";
   for (const button of document.querySelectorAll(".metric-button")) {
     const isChange = button.dataset.metric !== "attendance";
@@ -1492,7 +1500,7 @@ function renderPilotWeeklyChart(schoolId,year) {
     .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average)).attr("r",3.8)
     .attr("fill",palette.primary).attr("stroke",palette.primary).attr("stroke-width",1.1)
     .append("title").text(d=>PUBLIC_BUILD
-      ? `Week ${d.week}: about ${attendanceFormat(d.average)} / game · cumulative, rounded to nearest 500 · provisional`
+      ? `Week ${d.week}: ${attendanceFormat(d.average)}/game (cumulative)`
       : `Week ${d.week}: ${attendanceFormat(d.average)} / game · ${d.reported} reported of ${d.completed}`);
   if(PUBLIC_BUILD && confPoints.length) {
     const benchmarkColor=conferenceColor(conf);
@@ -1503,15 +1511,15 @@ function renderPilotWeeklyChart(schoolId,year) {
       .attr("class","weekly-conference-dot")
       .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average)).attr("r",2.3)
       .attr("fill",benchmarkColor)
-      .append("title").text(d=>`${conf} · week ${d.week}: about ${attendanceFormat(d.average)} / game · cumulative game-weighted, rounded · provisional`);
+      .append("title").text(d=>`${conf} · W${d.week}: ${attendanceFormat(d.average)}/game (cumulative)`);
   }
   const last=points.at(-1);
   svg.append("text").attr("x",x(last.week)+9).attr("y",y(last.average)+4)
     .attr("fill",palette.primary).attr("font-size",12).attr("font-weight",600)
-    .text((PUBLIC_BUILD?"≈":"")+attendanceFormat(last.average));
-  svg.attr("aria-label",`2026 weekly cumulative attendance average for ${school?.school_name}${PUBLIC_BUILD?`, with ${conf} conference comparison; rounded to nearest 500`:""}; provisional`);
+    .text(attendanceFormat(last.average));
+  svg.attr("aria-label",`2026 cumulative attendance average for ${school?.school_name}${PUBLIC_BUILD?`, with ${conf} conference benchmark`:""}; provisional`);
   $("weeklyChartCaption").textContent=PUBLIC_BUILD
-    ? `2026 cumulative average by week · rounded to nearest 500 fans/game · dashed ${conf} benchmark is game-weighted · provisional`
+    ? `Cumulative average by week · ${conf} benchmark (dashed)`
     : "2026 cumulative average by week · provisional regular-season reports; NCAA final annual pending";
 }
 
@@ -1524,7 +1532,12 @@ function renderPublicOfficialGameBars(schoolId) {
   for (const [week,date,opponent,attendance,sourceUrl] of rows) {
     const tr=document.createElement("tr");
     const dateCell=document.createElement("td");
-    dateCell.textContent=`${date} · W${week}`;
+    dateCell.className="game-date-cell";
+    const displayDate=new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US",{
+      month:"short",day:"numeric",timeZone:"UTC"
+    });
+    dateCell.textContent=`W${week} · ${displayDate}`;
+    dateCell.setAttribute("aria-label",`${date}, week ${week}`);
     const opponentCell=document.createElement("td");
     opponentCell.textContent=opponent;
     const citation=document.createElement("a");
@@ -1593,26 +1606,28 @@ async function renderCfbdGameDetails() {
   const year=state.target, schoolId=state.schoolId;
   const name=cohort.find(s=>Number(s.school_id)===schoolId)?.school_name || "School";
   const palette=teamPalette(schoolId);
-  $("gameDetailTitle").textContent=`${name} · ${year} games`;
+  $("gameDetailTitle").textContent=PUBLIC_BUILD
+    ? `${name} · 2026 Home Attendance` : `${name} · ${year} games`;
   $("gameDetailRows").replaceChildren();
   section.style.setProperty("--school-primary",palette.primary);
   $("weeklyTrendWrap").hidden=true;
   d3.select("#weeklyAverageChart").selectAll("*").remove();
   if (PUBLIC_BUILD) {
     // Always show 2026 verified game reports, independent of the map comparison years.
-    $("gameDetailTitle").textContent=`${name} · 2026 Season to Date`;
     $("gameDetailsSourceLink").href="./methodology.html#views";
-    $("gameDetailsSourceLink").textContent="Source methodology";
-    $("gameSourceNote").textContent=
-      "2026 provisional home-game attendance from official university and conference reports; dates and home designation checked against CFBD schedules. This section is independent of the selected comparison years.";
+    $("gameDetailsSourceLink").textContent="Methodology";
+    $("gameSourceNote").hidden=true;
     const count=renderPublicOfficialGameBars(schoolId);
     section.querySelector(".game-table-wrap").hidden=count===0;
-    $("gameDetailStatus").textContent=count
-      ? `${count} completed home games with reported attendance · provisional`
-      : "No verified 2026 home-game attendance reported yet.";
+    const dataThrough=ytdDataThroughLabel();
+    $("gameDetailStatus").textContent=(count
+      ? `${count} home games reported`
+      : "No home games reported yet")+
+      ` · Provisional${dataThrough?` · Data through ${dataThrough}`:""}`;
     renderPilotWeeklyChart(schoolId,2026);
     return;
   }
+  $("gameSourceNote").hidden=false;
   if ([2004,2005,2009,2010,2011].includes(year)) {
     $("gameDetailStatus").textContent="CFBD game attendance quarantined for known false zeros; bars withheld.";
     return;
@@ -1708,7 +1723,8 @@ async function bootPublic() {
   if (data?.schema_version !== 1 || !Array.isArray(data.schools) ||
       data.schools.length < 2500 || !Array.isArray(data.memberships) ||
       !data.freshness?.data_through || data.freshness.status !== "provisional" ||
-      data.weekly_2026?.round_to_nearest !== 500 ||
+      data.weekly_2026?.season !== 2026 ||
+      data.weekly_2026?.kind !== "cumulative_weekly_home_average" ||
       !Array.isArray(data.weekly_2026.schools) || !Array.isArray(data.weekly_2026.conferences) ||
       data.games_2026?.season !== 2026 || !Array.isArray(data.games_2026.schools))
     throw new Error("Validated public attendance summary is missing or incomplete");

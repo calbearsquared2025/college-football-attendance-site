@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#faf9f6">
   <meta name="description" content="Sources, calculations and limits of the college football attendance visualization.">
-  <title>Data &amp; Methodology | The United States of Football</title>
+  <title>Data &amp; Methodology | The United States of College Football</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=c9870c29f310">
+  <link rel="stylesheet" href="./styles.css?v=1371c07101c6">
   <script src="./theme.js"></script>
   <link rel="stylesheet" href="./methodology.css">
 </head>
@@ -17,7 +17,7 @@
 <a class="skip-link" href="#methodology-content">Skip to methodology</a>
 <main id="methodology-content" class="methodology-main">
   <a class="methodology-back" href="./index.html">Explore attendance</a>
-  <div class="methodology-eyebrow">DATA &amp; METHODOLOGY <span>Updated November 7, 2026 · <span data-ytd-status>2026 data: provisional</span></span></div>
+  <div class="methodology-eyebrow">DATA &amp; METHODOLOGY <span data-ytd-status>2026 data · provisional</span></div>
   <h1>How we count the crowd</h1>
   <p class="methodology-deck">This site compares reported FBS home attendance across schools, seasons and conferences. Sources and accounting rules vary by period. The methods below explain the comparisons and their limitations.</p>
 
@@ -73,10 +73,9 @@
         <tr><th scope="row">Conferences</th><td>Game-weighted attendance for either each year's actual members or a fixed group of today's members tracked backward.</td><td>Historical conference affiliations and corresponding conference-era colors follow the selected definition. Optional lineages connect Pac-10/Pac-12 and Big East/American membership histories.</td></tr>
         <tr><th scope="row">Historical P5 / P4</th><td>P5 follows ACC, Big Ten, Big 12, Pac-10/Pac-12 and SEC members in the chosen starting season (2014–2023). P4 follows ACC, Big Ten, Big 12 and SEC members in the chosen ending season (2024 onward).</td><td>The selected cohort remains fixed for that comparison. The modern Pac-12 is a separate conference.</td></tr>
         <tr><th scope="row">Benchmarks and custom groups</th><td>School, conference and user-selected comparison series calculated from qualifying attendance records.</td><td>Multiple benchmarks can be displayed; incomplete conference or group seasons are withheld.</td></tr>
-        <tr><th scope="row">2026 game and weekly views</th><td>Official home-game attendance is shown by date and opponent. Cumulative school and game-weighted conference averages track each reporting week.</td><td>Game bars show exact reported crowds with source links; cumulative weekly chart points are rounded to the nearest 500. All 2026 figures are provisional.</td></tr>
+        <tr><th scope="row">2026 game and weekly views</th><td>Official home-game attendance is shown by date and opponent. Cumulative school and game-weighted conference averages track each reporting week.</td><td>Game bars link to original attendance reports; weekly chart points show cumulative averages. All 2026 figures are provisional.</td></tr>
       </tbody></table>
     </div>
-    <p>Individual historical game records remain in the private research dataset.</p>
   </section>
 
   <section id="disruptions" class="methodology-section">
@@ -134,12 +133,10 @@
     const when = new Date(audit.data_through).toLocaleDateString("en-US", {
       timeZone: "UTC", year: "numeric", month: "long", day: "numeric"
     });
-    const label = "2026 provisional through " + when + " · " +
-      audit.matched_games + "/" + audit.qualifying_games + " completed home-game crowds verified" +
-      (audit.missing_games ? " · " + audit.missing_games + " missing" : "");
+    const label = "2026 data through " + when + " · provisional";
     nodes.forEach(node => {node.textContent = label;});
   } catch {
-    nodes.forEach(node => {node.textContent = "2026 provisional YTD · latest audit unavailable";});
+    nodes.forEach(node => {node.textContent = "2026 data · provisional (date unavailable)";});
   }
 </script>
 </body>
