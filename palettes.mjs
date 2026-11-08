@@ -165,7 +165,13 @@ const CONFERENCE_ALIASES = Object.freeze({
   "Pac-8": "Pac-10",
 });
 const PAPER = "#FAF9F6";
+const DARK_PAPER = "#131E26";
 const HEX = /^#[0-9a-f]{6}$/i;
+function currentPaper() {
+  // Node-based analytical tests default to the existing light palette.
+  return typeof document !== "undefined" && document.documentElement?.dataset.theme === "dark"
+    ? DARK_PAPER : PAPER;
+}
 const FALLBACK = ["#52636A", "#D1D7D2"];
 
 function rgb(hex) {
@@ -183,22 +189,35 @@ export function contrastRatio(foreground, background = PAPER) {
   const a = brightness(foreground), b = brightness(background);
   return (Math.max(a,b) + .05) / (Math.min(a,b) + .05);
 }
-// Keep hues recognizable but darken low-contrast colors for fine lines and text.
-export function readableColor(color) {
-  if (!HEX.test(color)) return FALLBACK[0];
+// Maintain at least 4.5:1 contrast for fine chart lines and text against either background.
+export function readableColor(color, background = currentPaper()) {
+  if (!HEX.test(color)) color = FALLBACK[0];
+  if (contrastRatio(color,background) >= 4.5) return color.toUpperCase();
   const original = rgb(color);
-  for (let scale = 1; scale >= 0; scale -= .025) {
-    const next = "#" + original.map(c => Math.round(c * scale).toString(16).padStart(2,"0")).join("");
-    if (contrastRatio(next) >= 4.5) return next.toUpperCase();
+  const dark = background === DARK_PAPER;
+  for (let step = 0; step <= 40; step++) {
+    const fraction = step / 40;
+    const next = "#" + original.map(channel => Math.round(
+      dark ? channel + (255 - channel) * fraction : channel * (1 - fraction)
+    ).toString(16).padStart(2,"0")).join("");
+    if (contrastRatio(next,background) >= 4.5) return next.toUpperCase();
   }
-  return "#111111";
+  return dark ? "#FFFFFF" : "#111111";
 }
 export function hasTeamPalette(schoolId) {
   return Object.hasOwn(SCHOOL_COLORS,Number(schoolId));
 }
 export function teamPalette(schoolId) {
   const pair = SCHOOL_COLORS[Number(schoolId)] ?? FALLBACK;
-  return {primary: readableColor(pair[0]), secondary: pair[1]};
+  const background = currentPaper();
+  if (background === DARK_PAPER) {
+    // Prefer the school's secondary at night, but use its primary if that is clearer.
+    const choice = contrastRatio(pair[1],background) >= 4.5 ? pair[1] :
+      contrastRatio(pair[0],background) >= 4.5 ? pair[0] : pair[1];
+    const other = choice === pair[0] ? pair[1] : pair[0];
+    return {primary:readableColor(choice,background),secondary:readableColor(other,background)};
+  }
+  return {primary:readableColor(pair[0],background),secondary:pair[1]};
 }
 export function conferenceColor(conference) {
   const canonical = CONFERENCE_ALIASES[conference] || conference;

@@ -19,6 +19,7 @@ const state = { baseline: 2019, target: 2025, metric: "pct", conference: "All", 
   benchmarks:[{key:"historical",type:"historical"}] };
 const colors = { rise: "#1c9d91", fall: "#e47866", level: "#e9b55e", missing: "#647f88" };
 const $ = id => document.getElementById(id);
+const themeColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function formattedChange(value,metric) {
   // Keep the underlying sign when a tiny nonzero percentage rounds to ±0.0%.
   return changeFormat(value,metric);
@@ -605,7 +606,7 @@ function renderMagnitudeKey() {
     for (const [shape,width] of [[geometry.path,geometry.strokeWidth],[geometry.tipPath,1.65]]) {
       const path=document.createElementNS(ns,"path");
       path.setAttribute("d",shape);path.setAttribute("fill","none");
-      path.setAttribute("stroke","#1b8275");path.setAttribute("stroke-width",String(width));
+      path.setAttribute("stroke",themeColor("--rise"));path.setAttribute("stroke-width",String(width));
       path.setAttribute("stroke-linecap","round");path.setAttribute("stroke-linejoin","round");
       svg.append(path);
     }
@@ -657,19 +658,19 @@ function renderMap() {
   selection.select(".marker-ring")
     .attr("r",d => state.metric === "attendance" && d.value !== null ? markerRadius(d.value,"attendance") :
       d.value === null ? 3.1 : 0)
-    .attr("fill",d => d.value === null ? "#faf9f6" : !inFocus(d) ? "#9aa3a1" : "#a78c50")
-    .attr("stroke",d => d.value === null ? "#849390" : !inFocus(d) ? "#9aa3a1" : "#fff")
+    .attr("fill",d => d.value === null ? themeColor("--paper") : !inFocus(d) ? themeColor("--map-muted") : themeColor("--gold"))
+    .attr("stroke",d => d.value === null ? themeColor("--neutral") : !inFocus(d) ? themeColor("--map-muted") : themeColor("--paper"))
     .attr("stroke-dasharray",d => d.value === null ? "1.5 1.5" : null);
   selection.select(".marker-arrow")
     .attr("d",d => state.metric === "attendance" ? null : mapGeometry(d)?.path ?? null)
-    .attr("stroke",d => !inFocus(d) ? "#929c9b" : mapNeutral(d) ? "#64716f" : d.value > 0 ? "#1b8275" : "#ba6046")
+    .attr("stroke",d => !inFocus(d) ? themeColor("--map-muted") : mapNeutral(d) ? themeColor("--neutral") : d.value > 0 ? themeColor("--rise") : themeColor("--fall"))
     .attr("stroke-width",d => {
       const g=state.metric==="attendance"?null:mapGeometry(d);
       return (g?.strokeWidth??0) + (d.school_id===state.schoolId?0.4:0);
     });
   selection.select(".marker-tip")
     .attr("d",d => state.metric === "attendance" ? null : mapGeometry(d)?.tipPath ?? null)
-    .attr("stroke",d => !inFocus(d) ? "#929c9b" : mapNeutral(d) ? "#52636a" : d.value > 0 ? "#1b8275" : "#ba6046")
+    .attr("stroke",d => !inFocus(d) ? themeColor("--map-muted") : mapNeutral(d) ? themeColor("--neutral") : d.value > 0 ? themeColor("--rise") : themeColor("--fall"))
     .attr("stroke-width",d => d.school_id === state.schoolId ? 1.95 : 1.65);
   // Stroke-only transparent targets follow the exact arrow instead of masking neighbors.
   selection.select(".marker-hit-circle")
@@ -734,7 +735,7 @@ function renderSchoolCard() {
   $("selectedDifferenceLabel").textContent = state.target===2026 ? "2026 YTD vs 2025" : "Change";
   const displayedChange = change?.value ?? null;
   $("selectedDifference").textContent = formattedChange(displayedChange,"pct");
-  $("selectedDifference").style.color = displayedChange===null||displayedChange===undefined?"#67757a":displayedChange>=0?"#1b8275":"#ba6046";
+  $("selectedDifference").style.color = themeColor(displayedChange===null||displayedChange===undefined?"--soft":displayedChange>=0?"--rise":"--fall");
   const candidate = candidateIndex.get(`${state.schoolId}:${state.target}`);
   const label = sourceLabel(after?.attendance_source);
   $("selectedCoverage").textContent = after
@@ -964,7 +965,7 @@ function renderQuickTrend() {
   svg.selectAll(".quick-dot").data(observed).join("circle")
     .attr("class","quick-dot").attr("cx",d=>x(d.year)).attr("cy",d=>y(d.average))
     .attr("r",d=>d.year===2026?3.7:2.2)
-    .attr("fill",d=>d.year===2026?"#faf9f6":palette.primary)
+    .attr("fill",d=>d.year===2026?themeColor("--paper"):palette.primary)
     .attr("stroke",palette.primary).attr("stroke-width",1.3);
   const showTrendTip=(event,d)=>{
     const context=disruptionsInSeason(disruptionRows,state.schoolId,d.year);
@@ -1191,7 +1192,7 @@ function renderTrendChart() {
       .append("circle").attr("class","chart-dot")
       .attr("cx",d=>x(d.year)).attr("cy",d=>y(d.average))
       .attr("r",d=>d.year===2026?4.7:item.benchmark?2.3:3.2)
-      .attr("fill",d=>d.year===2026||item.benchmark?"#faf9f6":item.color)
+      .attr("fill",d=>d.year===2026||item.benchmark?themeColor("--paper"):item.color)
       .attr("stroke",d=>seriesPointColor(item,d))
       .attr("stroke-width",d=>d.year===2026?2.1:1.3);
     if(!item.benchmark){
@@ -1222,7 +1223,7 @@ function renderTrendChart() {
     plot.append("text").attr("x",xLabel).attr("y",e.display+3)
       .attr("fill",e.item.color).attr("font-size",10.5).text(e.item.short);
   }
-  plot.append("text").attr("x",margin.left).attr("y",27).attr("fill","#7c8582")
+  plot.append("text").attr("x",margin.left).attr("y",27).attr("fill",themeColor("--soft"))
     .attr("font-size",10).text("REPORTED SPECTATORS / HOME GAME");
   const hover=plot.append("g").attr("pointer-events","none").style("display","none");
   const rule=hover.append("line").attr("class","chart-hover-rule")
@@ -1555,6 +1556,11 @@ async function renderCfbdGameDetails() {
     td.append(cell);tr.append(td);tbody.append(tr);
   }
 }
+
+// A theme change redraws direct SVG colors without resetting filters or the selected school.
+window.addEventListener("attendance-theme-change", () => {
+  if (viewport && cohort.length && schoolIndex.size) render();
+});
 
 function render() {
   syncMapFocusControls();

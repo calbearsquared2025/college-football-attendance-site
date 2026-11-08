@@ -73,3 +73,25 @@
  .exception-year{font-size:17px}
  .methodology-table{min-width:620px}
 }
+
+
+/* Methodology uses the same persisted site appearance as the explorer. */
+[data-theme="dark"] .methodology-deck,[data-theme="dark"] .methodology-principles p,
+[data-theme="dark"] .methodology-section>p,[data-theme="dark"] .methodology-definitions dd,
+[data-theme="dark"] .exception-list article p,[data-theme="dark"] .methodology-section ul{
+ color:#c1cdd0
+}
+[data-theme="dark"] .methodology-table thead{background:#263a45}
+[data-theme="dark"] .methodology-table thead th,[data-theme="dark"] .methodology-table tbody th{
+ color:var(--ink)
+}
+[data-theme="dark"] .methodology-callout{background:#213b39;color:#dceae6}
+[data-theme="dark"] .formula-box{background:var(--surface);color:var(--ink)}
+[data-theme="dark"] .formula-box p{color:var(--ink)}
+[data-theme="dark"] .exception-year{color:#d5bc83}
+[data-theme="dark"] .methodology-small{color:var(--soft)!important}
+@media(max-width:620px){
+ .methodology-header-nav{margin-left:auto}
+ .methodology-header-nav span[aria-current="page"]{display:none}
+ .methodology-header-nav{gap:7px}
+}
