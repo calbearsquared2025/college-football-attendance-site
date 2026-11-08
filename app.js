@@ -232,6 +232,7 @@ function syncMapFocusControls() {
   $("mapCustomGroupControls").hidden=state.mapFocus!=="custom";
   $("conferenceFilter").value=state.conference;
   $("schoolFilter").value=state.schoolId===null?"":String(state.schoolId);
+  $("clearMapSelection").hidden=state.mapFocus==="all" && state.schoolId===null;
   const level=state.metric==="attendance";
   $("baselineYearField").hidden=level;
   $("comparisonDivider").hidden=level;
@@ -315,6 +316,14 @@ function setupControls() {
     state.schoolId=$("schoolFilter").value?Number($("schoolFilter").value):null;
     state.mapFocus=state.schoolId===null?"all":"school";
     if(state.schoolBId===state.schoolId){state.schoolBId=null;$("schoolBFilter").value="";}
+    render();
+  });
+  $("clearMapSelection").addEventListener("click",()=>{
+    // Clear the map focus and school details, not the comparison years or metric.
+    state.mapFocus="all";
+    state.schoolId=null;
+    state.schoolBId=null;
+    $("schoolBFilter").value="";
     render();
   });
   $("mapAddGroupSchool").addEventListener("click",()=>{
@@ -1554,17 +1563,18 @@ async function renderCfbdGameDetails() {
   $("weeklyTrendWrap").hidden=true;
   d3.select("#weeklyAverageChart").selectAll("*").remove();
   if (PUBLIC_BUILD) {
-    $("gameDetailTitle").textContent=year===2026?`${name} · 2026 weekly attendance`:`${name} · inside the season`;
+    // Always show 2026 verified game reports, independent of the map comparison years.
+    $("gameDetailTitle").textContent=`${name} · 2026 Season to Date`;
     $("gameDetailsSourceLink").href="./methodology.html#views";
     $("gameDetailsSourceLink").textContent="Source methodology";
-    $("gameSourceNote").textContent=year===2026
-      ? "2026 provisional home-game attendance from official university and conference reports; dates and home designation checked against CFBD schedules."
-      : "Public display limited to derived annual summaries; no individual-game feed is published.";
-    section.querySelector(".game-table-wrap").hidden=year!==2026;
-    $("gameDetailStatus").textContent=year===2026
-      ? `${renderPublicOfficialGameBars(schoolId)} completed home games with reported attendance · provisional`
-      : "Historical individual-game records remain in the private research view; annual summaries are shown above.";
-    renderPilotWeeklyChart(schoolId,year);
+    $("gameSourceNote").textContent=
+      "2026 provisional home-game attendance from official university and conference reports; dates and home designation checked against CFBD schedules. This section is independent of the selected comparison years.";
+    const count=renderPublicOfficialGameBars(schoolId);
+    section.querySelector(".game-table-wrap").hidden=count===0;
+    $("gameDetailStatus").textContent=count
+      ? `${count} completed home games with reported attendance · provisional`
+      : "No verified 2026 home-game attendance reported yet.";
+    renderPilotWeeklyChart(schoolId,2026);
     return;
   }
   if ([2004,2005,2009,2010,2011].includes(year)) {

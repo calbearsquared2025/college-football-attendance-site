@@ -56,7 +56,7 @@
 
   <section class="map-layout" aria-label="Geographic attendance explorer">
     <div class="map-card">
-      <div class="map-topline"><h2 id="mapTitle">Attendance movement</h2><span id="mapRange">2019 → 2025</span></div>
+      <div class="map-topline"><h2 id="mapTitle">Attendance movement</h2><div class="map-topline-tools"><span id="mapRange">2019 → 2025</span><button id="clearMapSelection" type="button" class="clear-map-selection" hidden>Clear selection</button></div></div>
       <div class="map-stage">
         <svg id="atlasMap" viewBox="0 0 960 585" role="group" aria-label="Map of FBS attendance changes at 2026 home stadium locations"></svg>
         <div id="mapTooltip" class="map-tooltip" role="tooltip" hidden></div>
@@ -133,12 +133,13 @@
         </div>
       </section>
   
-  <section class="conference-comparison-section" aria-labelledby="conferenceComparisonTitle">
+  <details class="conference-comparison-section" aria-labelledby="conferenceComparisonTitle">
+    <summary class="conference-comparison-summary">
+      <span class="conference-comparison-heading" id="conferenceComparisonTitle">Conference Comparison</span>
+      <span class="conference-comparison-subtitle" id="conferenceComparisonSubtitle"></span>
+      <span class="conference-comparison-action" aria-hidden="true"><span class="conference-show-label">Show table</span><span class="conference-hide-label">Hide table</span></span>
+    </summary>
     <div class="conference-comparison-header">
-      <div>
-        <h2 id="conferenceComparisonTitle">Conference Comparison</h2>
-        <p class="conference-comparison-subtitle" id="conferenceComparisonSubtitle"></p>
-      </div>
       <label class="field conference-comparison-membership"><span>CONFERENCE MEMBERSHIP</span>
         <select id="conferenceTableMembership" aria-label="Conference comparison membership basis">
           <option value="historical">Actual members each season</option>
@@ -159,7 +160,7 @@
       </table>
     </div>
     <p class="conference-comparison-note" id="conferenceComparisonNote"></p>
-  </section>
+  </details>
 
   <section class="trends-section" aria-labelledby="trendTitle" hidden>
     <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages</span></div>

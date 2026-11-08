@@ -434,3 +434,30 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
  .conference-comparison-table{min-width:520px;font-size:11px}
  .conference-comparison-table th,.conference-comparison-table td{padding:8px 10px}
 }
+
+/* Compact map clear and expandable conference summary. */
+.map-topline-tools{display:flex;align-items:baseline;justify-content:flex-end;gap:13px;flex-wrap:wrap}
+.clear-map-selection{border:0;border-bottom:1px solid var(--soft);border-radius:0;background:transparent;color:var(--soft);padding:1px 0;font:600 11px/1.4 "DM Sans",Arial,sans-serif;white-space:nowrap}
+.clear-map-selection:hover,.clear-map-selection:focus-visible{color:var(--rise);border-color:var(--rise)}
+.conference-comparison-summary{list-style:none;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;cursor:pointer;padding:2px 0 8px}
+.conference-comparison-summary::-webkit-details-marker{display:none}
+.conference-comparison-summary::marker{content:""}
+.conference-comparison-heading{font:600 20px/1.2 "Source Serif 4",Georgia,serif;color:var(--ink)}
+.conference-comparison-summary .conference-comparison-subtitle{margin:0;color:var(--soft)}
+.conference-comparison-action{font-size:11px;color:var(--rise);font-weight:700;white-space:nowrap;margin-left:auto}
+.conference-comparison-action::after{content:"⌄";display:inline-block;margin-left:6px;transform:translateY(-1px)}
+.conference-comparison-section[open] .conference-comparison-action::after{transform:rotate(180deg) translateY(1px)}
+.conference-hide-label{display:none}
+.conference-comparison-section[open] .conference-show-label{display:none}
+.conference-comparison-section[open] .conference-hide-label{display:inline}
+.conference-comparison-section[open] .conference-comparison-summary{margin-bottom:12px}
+.conference-comparison-header{justify-content:flex-end}
+.conference-comparison-summary:focus-visible{outline:2px solid #bd8940;outline-offset:3px}
+@media(max-width:620px){
+ .map-topline{flex-wrap:wrap;align-items:start;row-gap:5px}
+ .map-topline-tools{margin-left:auto;gap:10px}
+ .conference-comparison-summary{align-items:center;gap:5px 10px}
+ .conference-comparison-heading{font-size:19px}
+ .conference-comparison-summary .conference-comparison-subtitle{order:3;flex-basis:100%;font-size:10px}
+ .conference-comparison-action{font-size:11px}
+}
