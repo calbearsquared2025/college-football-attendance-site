@@ -15,15 +15,8 @@
 </head>
 <body>
 <a class="skip-link" href="#methodology-content">Skip to methodology</a>
-<header class="masthead">
-  <a class="brand methodology-brand" href="./index.html">COLLEGE FOOTBALL <span> / ATTENDANCE</span></a>
-  <nav class="methodology-header-nav" aria-label="Site navigation">
-    <a href="./index.html">Explore attendance</a>
-    <span aria-current="page">Methodology</span>
-  </nav>
-  <label class="theme-picker"><span class="visually-hidden">Appearance</span><select id="themeMode" aria-label="Appearance" title="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
-</header>
 <main id="methodology-content" class="methodology-main">
+  <a class="methodology-back" href="./index.html">← Explore attendance</a>
   <div class="methodology-eyebrow">DATA &amp; METHODOLOGY <span>Updated November 7, 2026 · <span data-ytd-status>2026 data: provisional</span></span></div>
   <h1>How we count the crowd</h1>
   <p class="methodology-deck">This site compares reported FBS home attendance across schools, seasons and conferences. Sources and accounting rules vary by period. The methods below explain the comparisons and their limitations.</p>
@@ -122,7 +115,13 @@
 
   <div class="methodology-bottom"><a href="./index.html">← Return to the explorer</a><span>College football attendance · Independent research</span></div>
 </main>
-<footer class="site-footer">College football attendance <span>Independent research · source-attributed data</span></footer>
+<footer class="site-footer">
+  <span>Independent research · source-attributed attendance</span>
+  <div class="site-footer-actions">
+    <a href="./index.html">Explore attendance</a>
+    <label class="theme-picker footer-theme"><span>Appearance</span><select id="themeMode" aria-label="Appearance" title="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  </div>
+</footer>
 <script type="module">
   const nodes = document.querySelectorAll("[data-ytd-status]");
   try {

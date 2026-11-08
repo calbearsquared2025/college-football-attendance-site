@@ -18,12 +18,6 @@
 </head>
 <body>
 <a class="skip-link" href="#explore">Skip to explorer</a>
-<header class="masthead">
-  <div class="brand">COLLEGE FOOTBALL <span> / ATTENDANCE</span></div>
-  <div class="masthead-tools"><span class="private-pill"><a href="./methodology.html">DATA &amp; METHODOLOGY</a></span>
-  <label class="theme-picker"><span class="visually-hidden">Appearance</span><select id="themeMode" aria-label="Appearance" title="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
-  </div>
-</header>
 <main id="explore">
   <div class="page-intro"><h1>The United States of Football</h1><p>Is your school drawing bigger or smaller crowds?</p></div>
   <section class="controls-bar" aria-label="Attendance explorer controls">
@@ -72,16 +66,15 @@
           <span class="legend-item"><i class="legend-symbol rise"></i> <span>Increase</span></span>
           <span class="legend-item"><i class="legend-symbol fall"></i> <span>Decrease</span></span>
           <span class="legend-item"><i class="legend-symbol unavailable"></i> <span>Unavailable</span></span>
-          <span class="legend-item" id="flatLegendItem"><i class="legend-symbol flat"></i> <span>Essentially unchanged (&lt;1%)</span></span>
-          <span class="legend-item" id="mutedLegendItem" hidden><i class="legend-symbol muted"></i> <span>Other FBS schools</span></span>
+          <span class="legend-item" id="flatLegendItem"><i class="legend-symbol flat"></i> <span>Stable (&lt;1%)</span></span>
         </div>
         <span id="mapStatus" class="map-footnote">Loading attendance data…</span>
       </div>
       <div class="map-length-key" id="mapLengthKey" aria-label="Examples of arrow length" hidden>
-        <span class="map-length-lead">Example changes:</span>
+        <span class="map-length-lead">Arrow length:</span>
         <div class="map-length-samples" id="mapLengthSamples"></div>
       </div>
-      <p class="legend-explainer" id="markerScaleLegend">Arrow direction indicates change; length shows magnitude. Stadium positions use 2026 locations.</p>
+      <p class="legend-explainer" id="markerScaleLegend" hidden></p>
     </div>
     <aside class="map-sidebar" aria-label="Attendance statistics and school history">
       <section class="stats-grid" aria-label="Comparison overview">
@@ -102,7 +95,8 @@
       <p id="quickTrendEmpty" hidden>Historical attendance unavailable for this school.</p>
       <svg id="quickTrendChart" viewBox="0 0 390 145" role="img" aria-label="Selected school's historical attendance trend" hidden></svg><div id="quickTrendTooltip" class="quick-trend-tooltip" role="status" hidden></div>
     </div>
-    <div class="school-source"><span id="selectedCoverage"></span><a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>Source</a></div>
+    <div class="school-source"><span id="selectedCoverage"></span><a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
+    <div class="school-source" id="baselineSourceRow" hidden><span id="baselineCoverage"></span><a id="baselineReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
     <p id="disruptionNotice" class="disruption-notice" role="note" hidden></p>
     <p id="annualSpecialNote" class="source-exception" hidden></p>
     <span id="selectedStadium" class="visually-hidden"></span>
@@ -217,6 +211,12 @@
   </section>
 
 </main>
-<footer class="site-footer">Created by Matthew Putzulu · © 2026 <span><a href="./methodology.html">Sources &amp; methodology</a> · Go Bears!</span></footer>
+<footer class="site-footer">
+  <span>Created by Matthew Putzulu · © 2026 · Go Bears!</span>
+  <div class="site-footer-actions">
+    <a href="./methodology.html">Sources &amp; methodology</a>
+    <label class="theme-picker footer-theme"><span>Appearance</span><select id="themeMode" aria-label="Appearance" title="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  </div>
+</footer>
 </body>
 </html>

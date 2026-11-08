@@ -10,10 +10,6 @@ a{color:var(--rise);text-underline-offset:3px}
 .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .skip-link{position:absolute;top:-80px;left:12px;padding:8px;background:white;z-index:50}
 .skip-link:focus{top:12px}
-.masthead{height:55px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100vw - 1210px)/2));gap:16px}
-.brand{font-weight:700;font-size:12px;letter-spacing:.13em;white-space:nowrap}
-.brand span{font-weight:400;letter-spacing:.075em;color:var(--soft)}
-.private-pill{font-size:10px;letter-spacing:.09em;color:var(--soft)}
 main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .page-intro{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:25px 0 20px}
 .page-intro h1{font:600 clamp(21px,2.4vw,30px)/1.18 "Source Serif 4",Georgia,serif;letter-spacing:-.018em;margin:0}
@@ -71,8 +67,8 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .map-zoom button{width:32px;height:32px;border:1px solid #d2d6d2;background:#fff;color:#45545a;font-size:16px;border-radius:2px}
 .map-zoom button:hover{background:#f1f2ef}
 .map-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--rule);padding:9px 0 0}
-.map-legend{display:flex;align-items:center;gap:17px;flex-wrap:wrap;font-size:11px;color:#4e5b60}
-.legend-item{display:flex;align-items:center;gap:7px}
+.map-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:#4e5b60}
+.legend-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .legend-symbol{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--rise)}
 .legend-symbol.rise,.legend-symbol.fall{width:15px;height:2px;border-radius:0;position:relative;transform-origin:center}
 .legend-symbol.rise{color:var(--rise);transform:rotate(-26deg)}
@@ -109,6 +105,7 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .school-stat strong{font-size:19px;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
 .school-source{display:flex;grid-column:1/-1;gap:8px;align-items:center;color:var(--soft);font-size:11px;max-width:none}
 .school-source a{white-space:nowrap}
+.school-source[hidden]{display:none}
 .source-exception{grid-column:1/-1;font-size:11px;color:#6b6660;margin:0}
 .trends-section,.game-details-section{margin:22px 0 26px}
 .section-heading{display:flex;align-items:baseline;gap:15px;flex-wrap:wrap;margin-bottom:13px}
@@ -190,8 +187,10 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .methodology{border-top:1px solid var(--rule);font-size:12px;color:#667478;padding:17px 0;max-width:850px}
 .methodology summary{cursor:pointer;color:var(--ink);font-weight:600}
 .methodology p{margin:11px 0}
-.site-footer{border-top:1px solid var(--rule);display:flex;justify-content:space-between;gap:15px;padding:17px max(24px,calc((100vw - 1210px)/2));font-size:10px;letter-spacing:.03em;color:var(--soft)}
+.site-footer{border-top:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 20px;padding:17px max(24px,calc((100vw - 1210px)/2));font-size:11px;letter-spacing:.03em;color:var(--soft)}
 .site-footer a{color:inherit;text-underline-offset:2px}
+.site-footer-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.site-footer-actions a{display:inline-flex;align-items:center;min-height:44px}
 @media(max-width:1050px){
  .map-layout{grid-template-columns:minmax(0,1fr)}
  .map-sidebar{display:block}
@@ -206,9 +205,6 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
  .stat strong{font-size:18px}
 }
 @media(max-width:620px){
- .masthead{height:48px;padding:0 14px}
- .brand{font-size:10px;letter-spacing:.07em}
- .private-pill{font-size:9px}
  main{padding:0 13px 32px}
  .page-intro{padding:19px 0 15px}
  .page-intro h1{font-size:23px}
@@ -221,7 +217,7 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
  .field{min-width:0}
  .field>span{font-size:9px}
  .map-topline h2{font-size:18px}
- .map-stage{aspect-ratio:1.3}
+ /* Match viewBox; remove vertical letterboxing on phones. */
  #atlasMap{height:100%}
  .map-footer{gap:4px}
  .map-legend{gap:10px}
@@ -251,7 +247,8 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
  .chart-container svg,.game-chart-wrap svg{min-width:760px}
  .chart-axis text{font-size:10px}
  .game-table{font-size:11px}
- .site-footer{padding:14px 13px;font-size:9px}
+ .site-footer{padding:14px 13px;flex-direction:column;align-items:flex-start;font-size:11px}
+ .site-footer-actions{width:100%;justify-content:space-between;gap:10px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
@@ -323,16 +320,11 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 
 /* Appearance: preserve the existing editorial light palette by default. */
 :root{--surface:#fff;--surface-hover:#f0f2ed;--field-border:#cdd3d1;--chart-grid:#e3e6e2;--chart-axis:#69777a;--map-land:#eff0eb;--map-border:#d4dad5;--map-muted:#929c9b}
-.masthead-tools{display:flex;align-items:center;gap:15px;margin-left:auto;min-width:0}
-.theme-picker{display:inline-flex;align-items:center;flex:none}
-.theme-picker select{font:600 11px/1.3 "DM Sans",Arial,sans-serif;cursor:pointer;min-height:31px;width:77px;border:1px solid var(--field-border);border-radius:3px;background:var(--surface);color:var(--ink);padding:5px 6px}
+.theme-picker{display:inline-flex;align-items:center;flex:none;gap:8px}
+.footer-theme>span{font-size:10px;letter-spacing:.05em;color:var(--soft)}
+.theme-picker select{font:600 11px/1.3 "DM Sans",Arial,sans-serif;cursor:pointer;min-height:44px;width:84px;border:1px solid var(--field-border);border-radius:3px;background:var(--surface);color:var(--ink);padding:7px 8px}
 .theme-picker select:hover{border-color:var(--soft)}
 .theme-picker select:focus-visible{outline:2px solid #bd8940;outline-offset:2px}
-@media(max-width:620px){
- .masthead-tools{gap:9px}
- .brand span{display:none}
- .theme-picker select{width:72px;font-size:10px;min-height:30px}
-}
 :root[data-theme="dark"]{
  --paper:#131e26;--ink:#e9f0f1;--soft:#afbec4;--rule:#384b55;
  --rise:#5acdb7;--fall:#f29a87;--neutral:#adbdc3;--gold:#e6bb69;

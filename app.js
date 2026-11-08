@@ -32,6 +32,15 @@ function fansDelta(value) {
 function mapGeometry(point) {
   return point.geometry ?? arrowGeometry(point.value, state.metric, point.comparison?.before);
 }
+// Enlarge change arrows on narrow screens while preserving their relative lengths,
+// geographic anchors and inverse zoom scaling. Level-mode circles are unchanged.
+const narrowMapQuery=window.matchMedia("(max-width:620px)");
+function mapMarkerScale() {
+  return state.metric!=="attendance" && narrowMapQuery.matches ? 1.4 : 1;
+}
+function mapMarkerTransform(point) {
+  return `translate(${point.coordinates[0]},${point.coordinates[1]}) scale(${mapMarkerScale()/mapZoomScale})`;
+}
 function mapNeutral(point) {
   return state.metric !== "attendance" &&
     isMapNeutral(point.value, state.metric, point.comparison?.before);
@@ -407,7 +416,7 @@ function initializeMap(geo) {
       if (!$("mapSchoolChooser").hidden) closeSchoolChooser();
       // Keep symbols and their hit areas constant in screen pixels while zoom separates stadiums.
       viewport.select(".map-points").selectAll("g.map-marker")
-        .attr("transform",d=>`translate(${d.coordinates[0]},${d.coordinates[1]}) scale(${1/mapZoomScale})`);
+        .attr("transform",mapMarkerTransform);
     });
   svg.call(zoom);
   svg.on("dblclick.zoom",null);
@@ -457,15 +466,15 @@ function mapPointerCandidates(event, fallback) {
   const [x,y]=d3.pointer(event,viewport.node());
   const candidates=[];
   for(const point of hoveredPlotPoints) {
-    const dx=(x-point.coordinates[0])*mapZoomScale;
-    const dy=(y-point.coordinates[1])*mapZoomScale;
+    const dx=(x-point.coordinates[0])*mapZoomScale/mapMarkerScale();
+    const dy=(y-point.coordinates[1])*mapZoomScale/mapMarkerScale();
     const centerDistance=Math.hypot(dx,dy);
     const geometry=point.geometry;
     const distance=geometry?.hitSegments?.length ?
       Math.min(...geometry.hitSegments.map(segment=>distanceToSegment(dx,dy,segment))) :
       Math.max(0,centerDistance-(state.metric==="attendance" && point.value!=null ?
         markerRadius(point.value,"attendance") : 3.1));
-    if(distance<=9) candidates.push({point,distance,centerDistance});
+    if(distance<=9/mapMarkerScale()) candidates.push({point,distance,centerDistance});
   }
   candidates.sort((a,b)=>a.distance-b.distance || a.centerDistance-b.centerDistance ||
     a.point.school_id-b.point.school_id);
@@ -512,8 +521,8 @@ function showSchoolChooser(event,candidates) {
 function activateMapMarker(event,fallback) {
   const candidates=mapPointerCandidates(event,fallback);
   const nearest=candidates[0];
-  const ambiguous=candidates.filter(candidate=>candidate.distance<=5.5 &&
-    candidate.distance<=nearest.distance+2.5);
+  const ambiguous=candidates.filter(candidate=>candidate.distance<=5.5/mapMarkerScale() &&
+    candidate.distance<=nearest.distance+2.5/mapMarkerScale());
   if (ambiguous.length>1) {
     showSchoolChooser(event,ambiguous);
     return;
@@ -650,7 +659,7 @@ function renderMap() {
         return g;
       }, update => update, exit => exit.remove()
     )
-    .attr("transform",d => `translate(${d.coordinates[0]},${d.coordinates[1]}) scale(${1/mapZoomScale})`)
+    .attr("transform",mapMarkerTransform)
     .classed("hovered",false)
     .classed("active",d => d.school_id === state.schoolId)
     .classed("muted",d => !inFocus(d))
@@ -695,9 +704,8 @@ function renderMap() {
     state.metric === "attendance" ? attendanceFormat(d.value) : formattedChange(d.value,state.metric)}`);
   const focusPoints = plotting.filter(inFocus);
   $("mapStatus").textContent=focusIds===null
-    ? `${plotting.length} stadiums · ${focusPoints.filter(p=>p.value!==null).length} reported values`
-    : `${focusPoints.length} highlighted · ${plotting.length} FBS stadiums`;
-  $("mutedLegendItem").hidden=focusIds===null;
+    ? `${focusPoints.filter(p=>p.value!==null).length} of ${plotting.length} mapped schools with values`
+    : `${focusPoints.length} highlighted · ${plotting.length} mapped schools`;
   $("mapTitle").textContent = state.metric === "attendance" ? "Average reported attendance" : "Change in home attendance";
   $("mapRange").textContent = state.metric === "attendance" ?
     state.target === 2026 ? "2026 YTD · official reports" : `${state.target} season` :
@@ -710,10 +718,9 @@ function renderMap() {
   legend[1].hidden = state.metric === "attendance";
   legend[2].lastElementChild.textContent = state.metric === "attendance" ? "Not reported" : "Not comparable";
   $("flatLegendItem").hidden = state.metric === "attendance";
+  $("markerScaleLegend").hidden=state.metric!=="attendance";
   $("markerScaleLegend").textContent=state.metric==="attendance"
-    ? "Larger circles = higher reported home attendance per game."
-    : "Arrow direction shows increase, decrease or little change; length shows magnitude. Zoom to separate nearby schools."+
-      (focusIds===null?"":" Highlighted schools appear in color; others are gray.");
+    ? "Circle size = reported attendance per game." : "";
   renderMagnitudeKey();
   svg.attr("aria-label",state.metric === "attendance"
     ? `2026 stadium locations showing ${state.target} reported attendance level`
@@ -747,13 +754,29 @@ function renderSchoolCard() {
   $("selectedDifference").textContent = formattedChange(displayedChange,"pct");
   $("selectedDifference").style.color = themeColor(displayedChange===null||displayedChange===undefined?"--soft":displayedChange>=0?"--rise":"--fall");
   const candidate = candidateIndex.get(`${state.schoolId}:${state.target}`);
-  const label = sourceLabel(after?.attendance_source);
-  $("selectedCoverage").textContent = after
-    ? `${label} · ${after.reported_home_games} of ${after.completed_home_games} games` +
-      (after.missing_home_games ? ` · ${after.missing_home_games} missing` : "") +
-      (after.data_through ? ` · updated ${after.data_through.slice(0,10)}` : "")
-    : candidate ? `CFBD ${candidate.verification_status.replaceAll("_"," ")} · not qualified for annual trends`
-    : "No qualified annual attendance";
+  const coverageText=(row,year)=>{
+    if(!row) return `${year} · No qualified annual attendance`;
+    const label=sourceLabel(row.attendance_source).replace(" · YTD","");
+    const ncaa=row.attendance_source?.startsWith("ncaa_");
+    const games=ncaa
+      ? `${row.reported_home_games} credited home games`
+      : `${row.reported_home_games} of ${row.completed_home_games} games reported`;
+    return `${year}${year===2026?" YTD":""} · ${label} · ${games}` +
+      (row.missing_home_games ? ` · ${row.missing_home_games} missing` : "") +
+      (row.data_through ? ` · updated ${row.data_through.slice(0,10)}` : "");
+  };
+  $("selectedCoverage").textContent = after ? coverageText(after,state.target)
+    : candidate ? `${state.target} · CFBD ${candidate.verification_status.replaceAll("_"," ")} · not qualified for annual trends`
+    : `${state.target} · No qualified annual attendance`;
+  const baselineYear=state.target===2026?2025:state.baseline;
+  $("baselineSourceRow").hidden=level;
+  $("baselineCoverage").textContent=coverageText(before,baselineYear);
+  const baselineLink=$("baselineReportSource");
+  baselineLink.hidden=level||!before?.source_url;
+  if(before?.source_url) {
+    baselineLink.href=before.source_url;
+    baselineLink.textContent=`View ${baselineYear} source ↗`;
+  }
   const special = $("annualSpecialNote");
   const exception = item.school_name === "LSU" && state.target === 2015 && after
     ? "2015 home-credit exception"
@@ -768,8 +791,18 @@ function renderSchoolCard() {
     special.append(exception+" · ",link);
   }
   const link = $("annualReportSource");
-  link.hidden = !after?.source_url;
-  if (after?.source_url) {link.href=after.source_url;link.textContent="Source ↗";}
+  link.hidden = !after?.source_url && !(state.target===2026 && after?.reported_home_games>0);
+  if(!link.hidden) {
+    if(state.target===2026) {
+      link.href="#gameDetailTitle";
+      link.removeAttribute("target");
+      link.textContent="Game sources ↓";
+    } else {
+      link.href=after.source_url;
+      link.target="_blank";
+      link.textContent=`View ${state.target} source ↗`;
+    }
+  }
   $("selectedStadium").textContent = locations.get(state.schoolId)?.stadium || "2026 stadium location unavailable";
   const context=attendanceContext(state.schoolId), notice=$("disruptionNotice");
   notice.replaceChildren();notice.hidden=!context.length;
@@ -786,6 +819,9 @@ function renderMovers() {
   const section=$("moversSection");
   const level=state.metric==="attendance";
   const conferences=state.moverType==="conference";
+  $("moversTitle").textContent="Key Stats · "+(level
+    ? `${state.target}${state.target===2026?" YTD":""}`
+    : `${state.target===2026?2025:state.baseline} vs. ${state.target===2026?"2026 YTD":state.target}`);
   section.hidden=false;
   $("keyStatsMembershipField").hidden=!conferences;
   $("keyStatsMembership").value=state.keyStatsMembership;
@@ -990,10 +1026,10 @@ function renderStats() {
     $("medianChange").textContent=formattedChange(changes.length?d3.median(changes):null,"pct");
     $("medianLabel").textContent=`Comparable programs · ${state.baseline}–${state.target}${state.target===2026?" YTD provisional":""}`;
   }
-  $("comparisonNotice").textContent = state.target === 2026
+  $("comparisonNotice").hidden=state.target!==2026;
+  $("comparisonNotice").textContent=state.target===2026
     ? `2026 YTD · provisional reports through ${ytdThrough?.slice(0,10)??"latest update"}${levelMode?"":" · versus 2025 full season (not matched-week)"}.`
-    : levelMode ? `${state.target} season · reported home attendance per game.`
-    : `${state.baseline}–${state.target} · schools with complete, comparable attendance in both years.`;
+    : "";
   for (const button of document.querySelectorAll(".metric-button")) {
     const isChange = button.dataset.metric !== "attendance";
     button.disabled = state.target <= state.baseline && isChange;
@@ -1649,6 +1685,9 @@ async function renderCfbdGameDetails() {
 }
 
 // A theme change redraws direct SVG colors without resetting filters or the selected school.
+narrowMapQuery.addEventListener("change", () => {
+  if(viewport && cohort.length && schoolIndex.size) renderMap();
+});
 window.addEventListener("attendance-theme-change", () => {
   if (viewport && cohort.length && schoolIndex.size) render();
 });

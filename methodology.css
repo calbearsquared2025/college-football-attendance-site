@@ -1,8 +1,6 @@
-.methodology-brand{text-decoration:none;color:var(--ink)}
-.methodology-header-nav{display:flex;align-items:center;gap:20px;font-size:11px;white-space:nowrap}
-.methodology-header-nav a{text-decoration:none;color:var(--ink);font-weight:600}
-.methodology-header-nav span{color:var(--soft)}
-.methodology-main{max-width:1100px;padding-top:42px;padding-bottom:80px}
+.methodology-main{max-width:1100px;padding-top:28px;padding-bottom:80px}
+.methodology-back{display:inline-block;margin:0 0 20px;color:var(--soft);font-size:11px;font-weight:600;text-decoration:none}
+.methodology-back:hover{text-decoration:underline;text-underline-offset:4px}
 .methodology-eyebrow,.section-index,.principle-index{font-size:10px;line-height:1.5;letter-spacing:.12em;font-weight:700;color:var(--rise)}
 .methodology-eyebrow{display:flex;gap:18px;flex-wrap:wrap}
 .methodology-eyebrow span{font-weight:500;color:var(--soft);letter-spacing:0}
@@ -14,7 +12,7 @@
 .methodology-main a{overflow-wrap:anywhere}
 .methodology-jumps{border-block:1px solid var(--rule);display:flex;flex-wrap:wrap;align-items:center;gap:8px 23px;padding:14px 0;margin:34px 0 40px}
 .methodology-jumps a{font-size:11px;color:var(--ink);text-decoration:none;font-weight:600}
-.methodology-jumps a:hover,.methodology-header-nav a:hover{text-decoration:underline;text-underline-offset:4px}
+.methodology-jumps a:hover{text-decoration:underline;text-underline-offset:4px}
 .methodology-intro{margin:0 0 55px}
 .methodology-intro h2{font-size:26px}
 .methodology-principles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--rule);margin-top:20px}
@@ -54,10 +52,7 @@
 .methodology-bottom a{font-size:12px;font-weight:700;text-decoration:none}
 .methodology-bottom span{font-size:10px;color:var(--soft)}
 @media(max-width:760px){
- .methodology-main{padding-top:29px;padding-bottom:54px}
- .methodology-header-nav{gap:12px}
- .methodology-brand{font-size:10px;letter-spacing:.08em}
- .methodology-header-nav{font-size:10px}
+ .methodology-main{padding-top:22px;padding-bottom:54px}
  .methodology-principles{display:block}
  .methodology-principles>div{padding:18px 0}
  .methodology-principles>div+div{border-left:0;border-top:1px solid var(--rule);padding-left:0}
@@ -66,7 +61,6 @@
  .methodology-jumps{margin:22px 0 30px;gap:12px 18px}
 }
 @media(max-width:460px){
- .methodology-brand span{display:none}
  .methodology-main{padding-left:17px;padding-right:17px}
  .methodology-eyebrow{gap:5px;flex-direction:column}
  .exception-list article{grid-template-columns:1fr;gap:5px}
@@ -90,8 +84,3 @@
 [data-theme="dark"] .formula-box p{color:var(--ink)}
 [data-theme="dark"] .exception-year{color:#d5bc83}
 [data-theme="dark"] .methodology-small{color:var(--soft)!important}
-@media(max-width:620px){
- .methodology-header-nav{margin-left:auto}
- .methodology-header-nav span[aria-current="page"]{display:none}
- .methodology-header-nav{gap:7px}
-}
