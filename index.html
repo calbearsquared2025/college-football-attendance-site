@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#faf9f6">
-  <meta name="description" content="Does college football have an attendance problem? Explore reported FBS home attendance since 2001, by school and conference.">
-  <title>Does College Football Have an Attendance Problem?</title>
+  <meta name="description" content="The United States of Football. Explore reported FBS home attendance since 2001, by school and conference.">
+  <title>The United States of Football</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
   <span class="private-pill"><a href="./methodology.html">DATA &amp; METHODOLOGY</a></span>
 </header>
 <main id="explore">
-  <div class="page-intro"><h1>Does College Football Have an Attendance Problem?</h1><p>Explore reported home attendance by school, conference, and era.</p></div>
+  <div class="page-intro"><h1>The United States of Football</h1><p>Is your school drawing bigger or smaller crowds?</p></div>
   <section class="controls-bar" aria-label="Attendance explorer controls">
     <label class="field" id="baselineYearField"><span>FROM</span><select id="baselineYear" aria-label="Starting season"></select></label>
     <span class="comparison-divider" id="comparisonDivider" aria-hidden="true">→</span>
@@ -66,8 +66,8 @@
       </div>
       <div class="map-footer">
         <div class="map-legend" aria-label="Map legend">
-          <span class="legend-item"><i class="legend-symbol rise"></i> <span>Increase ↗</span></span>
-          <span class="legend-item"><i class="legend-symbol fall"></i> <span>Decrease ↘</span></span>
+          <span class="legend-item"><i class="legend-symbol rise"></i> <span>Increase</span></span>
+          <span class="legend-item"><i class="legend-symbol fall"></i> <span>Decrease</span></span>
           <span class="legend-item"><i class="legend-symbol unavailable"></i> <span>Unavailable</span></span>
           <span class="legend-item" id="flatLegendItem"><i class="legend-symbol flat"></i> <span>Essentially unchanged (&lt;1%)</span></span>
           <span class="legend-item" id="mutedLegendItem" hidden><i class="legend-symbol muted"></i> <span>Other FBS schools</span></span>
@@ -78,7 +78,7 @@
         <span class="map-length-lead">Example changes:</span>
         <div class="map-length-samples" id="mapLengthSamples"></div>
       </div>
-      <p class="legend-explainer" id="markerScaleLegend">Straight arrows: ↗ increase, ↘ decrease; length shows change. Stadium positions use 2026 locations.</p>
+      <p class="legend-explainer" id="markerScaleLegend">Arrow direction indicates change; length shows magnitude. Stadium positions use 2026 locations.</p>
     </div>
     <aside class="map-sidebar" aria-label="Attendance statistics and school history">
       <section class="stats-grid" aria-label="Comparison overview">
@@ -131,7 +131,7 @@
       </section>
   
   <section class="trends-section" aria-labelledby="trendTitle" hidden>
-    <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages · no interpolation</span></div>
+    <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages</span></div>
     <div class="trend-controls">
       <label class="field"><span>COMPARE SCHOOL</span><select id="schoolBFilter" aria-label="Compare another school"><option value="">No second school</option></select></label>
       <label class="field"><span>PRIMARY BENCHMARK</span><select id="conferenceMode" aria-label="Primary benchmark; changes the chart immediately">
@@ -168,7 +168,6 @@
         <tbody id="trendStatsRows"></tbody>
       </table>
     </div>
-    <p id="seasonAvailabilityNote" class="season-availability-note"></p>
     <span id="lineageHelp" class="visually-hidden"></span>
   </section>
 
@@ -185,8 +184,7 @@
     </tr></thead><tbody id="gameDetailRows"></tbody></table></div>
   </section>
 
-  <p class="methodology"><a href="./methodology.html">Data &amp; methodology</a> — full source history, calculations, corrections and known exceptions.</p>
 </main>
-<footer class="site-footer">Created by Matthew Putzulu · © 2026 <span>Sources &amp; methodology · Go Bears!</span></footer>
+<footer class="site-footer">Created by Matthew Putzulu · © 2026 <span><a href="./methodology.html">Sources &amp; methodology</a> · Go Bears!</span></footer>
 </body>
 </html>
