@@ -1,4 +1,4 @@
-# Does College Football Have an Attendance Problem?
+# The United States of Football
 
 Public preview: https://calbearsquared2025.github.io/college-football-attendance-site/
 
