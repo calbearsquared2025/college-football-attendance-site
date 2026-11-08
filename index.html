@@ -133,6 +133,34 @@
         </div>
       </section>
   
+  <section class="conference-comparison-section" aria-labelledby="conferenceComparisonTitle">
+    <div class="conference-comparison-header">
+      <div>
+        <h2 id="conferenceComparisonTitle">Conference Comparison</h2>
+        <p class="conference-comparison-subtitle" id="conferenceComparisonSubtitle"></p>
+      </div>
+      <label class="field conference-comparison-membership"><span>CONFERENCE MEMBERSHIP</span>
+        <select id="conferenceTableMembership" aria-label="Conference comparison membership basis">
+          <option value="historical">Actual members each season</option>
+          <option value="fixed">2026 school cohorts</option>
+        </select>
+      </label>
+    </div>
+    <div class="conference-comparison-scroll" role="region" tabindex="0" aria-label="Conference attendance comparison, scroll horizontally to view all columns">
+      <table class="conference-comparison-table" aria-label="Average reported home attendance by conference for selected seasons">
+        <thead><tr>
+          <th scope="col">Conference</th>
+          <th scope="col" id="conferenceTableFromHeading">FROM</th>
+          <th scope="col" id="conferenceTableToHeading">TO</th>
+          <th scope="col" id="conferenceTableChangeHeading">Change / game</th>
+          <th scope="col" id="conferenceTablePctHeading">% change</th>
+        </tr></thead>
+        <tbody id="conferenceTableRows"></tbody>
+      </table>
+    </div>
+    <p class="conference-comparison-note" id="conferenceComparisonNote"></p>
+  </section>
+
   <section class="trends-section" aria-labelledby="trendTitle" hidden>
     <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages</span></div>
     <div class="trend-controls">

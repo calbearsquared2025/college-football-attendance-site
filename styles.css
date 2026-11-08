@@ -407,3 +407,30 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
  border-color:#675743;color:#dfbb80
 }
 [data-theme="dark"] .chart-key .key-line{border-color:#fff3}
+
+
+/* Conference comparisons follow the map's From and To years, but retain their own membership basis. */
+.conference-comparison-section{border-top:1px solid var(--rule);padding-top:18px;margin:23px 0 28px}
+.conference-comparison-header{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:11px}
+.conference-comparison-header h2{font:600 20px/1.2 "Source Serif 4",Georgia,serif;margin:0}
+.conference-comparison-subtitle{font-size:11px;color:var(--soft);margin:5px 0 0}
+.conference-comparison-membership{min-width:205px}
+.conference-comparison-scroll{overflow-x:auto;overscroll-behavior-x:contain}
+.conference-comparison-table{border-collapse:collapse;width:100%;min-width:545px;font-size:12px}
+.conference-comparison-table th,.conference-comparison-table td{padding:9px 12px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums;white-space:nowrap}
+.conference-comparison-table thead th{color:var(--soft);font-size:10px;letter-spacing:.055em;font-weight:700;text-align:right}
+.conference-comparison-table thead th:first-child{text-align:left}
+.conference-comparison-table tbody th{text-align:left;font-weight:600;color:var(--ink)}
+.conference-comparison-table tbody td{text-align:right}
+.conference-comparison-table tbody tr:hover{background:var(--surface-hover)}
+.conference-table-swatch{display:inline-block;width:4px;height:13px;margin-right:9px;vertical-align:-2px}
+.conference-comparison-table .conference-positive{color:var(--rise)}
+.conference-comparison-table .conference-negative{color:var(--fall)}
+.conference-comparison-note{font-size:11px;line-height:1.5;color:var(--soft);margin:9px 0 0}
+@media(max-width:620px){
+ .conference-comparison-section{margin:18px 0 24px}
+ .conference-comparison-header{align-items:start}
+ .conference-comparison-membership{min-width:0;max-width:100%;width:100%}
+ .conference-comparison-table{min-width:520px;font-size:11px}
+ .conference-comparison-table th,.conference-comparison-table td{padding:8px 10px}
+}

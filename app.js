@@ -355,6 +355,7 @@ function setupControls() {
   renderGroupChips();
   syncBenchmarkDraftControls();
   $("keyStatsMembership").addEventListener("change",()=>{state.keyStatsMembership=$("keyStatsMembership").value;renderMovers();});
+  $("conferenceTableMembership").addEventListener("change",renderConferenceComparison);
   for (const button of document.querySelectorAll(".mover-type-button")) {
     button.addEventListener("click", () => {
       state.moverType=button.dataset.moverType;
@@ -861,6 +862,86 @@ function renderMovers() {
     : state.mapFocus==="custom"?"custom group":"All FBS";
   $("moversSubtitle").textContent=`${state.target===2026?"2026 YTD (provisional)":state.target} · ${membershipText} · ${conferences?"conference game-weighted averages":"school averages"}`+
     (level?"":` · changes since ${state.baseline}`);
+}
+
+// Independent conference overview using the same validated aggregates as Key Stats.
+// Historical names are literal: Pac-10/Pac-12 and Big East/American are not silently merged.
+function renderConferenceComparison() {
+  const basis=$("conferenceTableMembership").value;
+  const historical=basis==="historical";
+  const level=state.metric==="attendance";
+  const fromYear=state.baseline,toYear=state.target;
+  const label=year=>year===2026?"2026 YTD":String(year);
+  $("conferenceTableFromHeading").textContent=label(fromYear)+" / game";
+  $("conferenceTableToHeading").textContent=label(toYear)+" / game";
+  $("conferenceTableFromHeading").hidden=level;
+  $("conferenceTableChangeHeading").hidden=level;
+  $("conferenceTablePctHeading").hidden=level;
+
+  const rows=$("conferenceTableRows");
+  rows.replaceChildren();
+  const names=historical
+    ? [...new Set(historicalConferenceRows.filter(row=>
+        Number(row.season)===fromYear || (toYear!==2026 && Number(row.season)===toYear)
+      ).map(row=>row.conference).concat(toYear===2026?
+        cohort.map(row=>row.conference_2026):[]))].filter(Boolean)
+    : [...new Set(cohort.map(row=>row.conference_2026))].filter(Boolean);
+  const values=names.map(name=>{
+    const series=conferenceTrendSeries(conferenceRows,historicalConferenceRows,name,
+      historical?"historical":"fixed");
+    const members=cohort.filter(row=>row.conference_2026===name);
+    const value=year=>year===2026
+      ? conference2026Ytd(members,schoolIndex).average
+      : series.find(point=>point.year===year)?.average;
+    const from=value(fromYear),to=value(toYear);
+    if ((!Number.isFinite(from)||from<=0) && (!Number.isFinite(to)||to<=0))return null;
+    const difference=from>0&&to>0?to-from:null;
+    const pct=difference!==null?100*difference/from:null;
+    return {name,from:from>0?from:null,to:to>0?to:null,difference,pct};
+  }).filter(Boolean).filter(item=>!level||item.to!==null);
+
+  const rank=row=>level?row.to:state.metric==="absolute"?row.difference:row.pct;
+  values.sort((a,b)=>{
+    const x=rank(a),y=rank(b);
+    if(x===null&&y!==null)return 1;
+    if(x!==null&&y===null)return -1;
+    return x===null?a.name.localeCompare(b.name):(y-x)||a.name.localeCompare(b.name);
+  });
+  for(const item of values){
+    const tr=document.createElement("tr");
+    const name=document.createElement("th");
+    name.scope="row";
+    const swatch=document.createElement("i");
+    swatch.className="conference-table-swatch";
+    swatch.style.backgroundColor=conferenceColor(item.name);
+    swatch.setAttribute("aria-hidden","true");
+    name.append(swatch,document.createTextNode(item.name));
+    tr.append(name);
+    const cells=[
+      item.from===null?"—":attendanceFormat(item.from),
+      item.to===null?"—":attendanceFormat(item.to)+(toYear===2026?"*":""),
+      item.difference===null?"—":fansDelta(item.difference),
+      item.pct===null?"—":formattedChange(item.pct,"pct"),
+    ];
+    cells.forEach((text,i)=>{
+      const td=document.createElement("td");
+      td.textContent=text;
+      if(i===0||i>=2)td.hidden=level;
+      if(i>=2 && item.difference!==null)td.className=item.difference>0?
+        "conference-positive":item.difference<0?"conference-negative":"";
+      tr.append(td);
+    });
+    rows.append(tr);
+  }
+  $("conferenceComparisonSubtitle").textContent=level
+    ? "Reported spectators per home game · "+label(toYear)
+    : label(fromYear)+" vs. "+label(toYear)+" · reported spectators per home game";
+  $("conferenceComparisonNote").textContent=
+    (historical
+      ? "Actual conference membership in each season. Realignment changes the schools included; former and successor league names are separate."
+      : "The same 2026 conference school groups are tracked backward through the selected seasons.")+
+    " Conference averages are weighted by reported home games; unavailable or incomplete figures are shown as —."+
+    (toYear===2026?" *2026 YTD is provisional and compared with a full prior season.":"");
 }
 
 function renderStats() {
@@ -1568,7 +1649,7 @@ function render() {
   const ids=activeFocusIds();
   currentPoints=ids && state.mapFocus!=="school"
     ? mapPoints.filter(p=>ids.has(p.school_id)) : mapPoints;
-  renderMap();renderSchoolCard();renderStats();renderQuickTrend();renderTrendChart();
+  renderMap();renderSchoolCard();renderStats();renderConferenceComparison();renderQuickTrend();renderTrendChart();
   void renderCfbdGameDetails();
 }
 
