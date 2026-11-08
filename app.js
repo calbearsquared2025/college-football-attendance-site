@@ -733,28 +733,6 @@ function renderSchoolCard() {
   const displayedChange = change?.value ?? null;
   $("selectedDifference").textContent = formattedChange(displayedChange,"pct");
   $("selectedDifference").style.color = displayedChange===null||displayedChange===undefined?"#67757a":displayedChange>=0?"#1b8275":"#ba6046";
-  // CFBD's stadium roster is the baseline; source-backed venue overrides supersede it.
-  // Neither number independently establishes a game-specific sellout.
-  const capacityRecord=verifiedCapacities.get(state.schoolId);
-  const baselineCapacity=locations.get(state.schoolId)?.capacity;
-  const candidateCapacity=Number(capacityRecord?.capacity);
-  const hasVerifiedCapacity=Number.isSafeInteger(candidateCapacity)&&candidateCapacity>0&&
-    Boolean(capacityRecord?.source_url);
-  const withheld=Boolean(capacityRecord?.source_url)&&!hasVerifiedCapacity;
-  const capacityNumber=withheld?null:hasVerifiedCapacity?candidateCapacity:baselineCapacity;
-  $("selectedCapacityWrap").hidden=false;
-  $("selectedCapacity").textContent=capacityNumber==null?"—":attendanceFormat(capacityNumber);
-  $("selectedCapacityContext").textContent=hasVerifiedCapacity
-    ? `University/venue source · ${capacityRecord?.note||"listed capacity; game configurations may vary"}`
-    : withheld
-      ? `Effective capacity withheld · ${capacityRecord?.note||"documented venue change"}`
-      : "CFBD-listed capacity · nominal; not independently checked for this venue";
-  const capacitySource=$("selectedCapacitySource");
-  capacitySource.hidden=!capacityRecord?.source_url;
-  if(capacityRecord?.source_url){
-    capacitySource.href=capacityRecord.source_url;
-    capacitySource.textContent=hasVerifiedCapacity?"Official capacity source":"Official venue note";
-  }
   const candidate = candidateIndex.get(`${state.schoolId}:${state.target}`);
   const label = sourceLabel(after?.attendance_source);
   $("selectedCoverage").textContent = after
@@ -901,9 +879,6 @@ function renderStats() {
     state.target===2026 ?
       "Schools with a valid 2025 full-season average and complete attendance for reported 2026 YTD home games." :
       `Schools with complete, eligible home-attendance averages in both ${state.baseline} and ${state.target}; missing, partial, and exception-flagged seasons are excluded.`;
-  $("unchangedCount").hidden=true;
-  $("unchangedSchools").hidden=true;
-  $("unchangedSchools").replaceChildren();
   $("highSchoolName").hidden=!levelMode || !ordered.length;
   $("lowSchoolName").hidden=!levelMode || !ordered.length;
   if(levelMode) {
@@ -919,20 +894,6 @@ function renderStats() {
     $("comparableCount").textContent=comparable.length;
     $("gainCount").textContent=changes.filter(v=>v>0).length;
     $("lossCount").textContent=changes.filter(v=>v<0).length;
-    const unchangedSchools=currentPoints.filter(p=>p.comparison?.value===0);
-    $("unchangedCount").hidden=!unchangedSchools.length;
-    $("unchangedCount").textContent=`${unchangedSchools.length} unchanged · view ${unchangedSchools.length===1?"school":"schools"}`;
-    $("unchangedCount").onclick=()=>{
-      if(unchangedSchools.length===1){selectSchool(unchangedSchools[0].school_id);return;}
-      $("unchangedSchools").hidden=!$("unchangedSchools").hidden;
-    };
-    for(const school of unchangedSchools){
-      const button=document.createElement("button");
-      button.type="button";button.className="unchanged-school";
-      button.textContent=school.school_name;
-      button.addEventListener("click",()=>selectSchool(school.school_id));
-      $("unchangedSchools").append(button);
-    }
     $("medianChange").textContent=formattedChange(changes.length?d3.median(changes):null,"pct");
     $("medianLabel").textContent=`Comparable programs · ${state.baseline}–${state.target}${state.target===2026?" YTD provisional":""}`;
   }

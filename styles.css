@@ -101,9 +101,9 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .conference-link{background:none;border:0;padding:2px 0;color:#526975;font-size:11px;text-align:left;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
 .conference-link:hover{color:#1b8275}
 .school-stat{display:flex;flex-direction:column;gap:2px;min-width:95px}
+.school-stat--change{grid-column:1/-1}
 .school-stat span{font-size:10px;color:var(--soft)}
 .school-stat strong{font-size:19px;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
-.school-stat small{display:block;color:var(--soft);font-size:10px;line-height:1.35}
 .school-source{display:flex;grid-column:1/-1;gap:8px;align-items:center;color:var(--soft);font-size:11px;max-width:none}
 .school-source a{white-space:nowrap}
 .source-exception{grid-column:1/-1;font-size:11px;color:#6b6660;margin:0}
@@ -310,10 +310,6 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .map-custom-group .field{min-width:175px;flex:1}
 .map-custom-group .group-chips{display:flex;gap:4px;align-items:center;flex-wrap:wrap;min-height:28px;font-size:11px}
 #mapFocusNote{font-size:11px;padding:0;margin-top:7px;min-height:0}
-.unchanged-link{display:block;font-size:10.5px;text-align:left;background:none;border:0;color:#386b74;padding:3px 0;text-decoration:underline;text-underline-offset:2px}
-.unchanged-link:hover{color:#1b8275}
-.unchanged-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-.unchanged-school{font-size:10px;background:#eef3f1;color:#243d44;border:1px solid #c5d2cd;padding:3px 6px;border-radius:3px}
 #keyStatsMembershipField{min-width:180px;max-width:230px}
 .movers-heading{justify-content:flex-start}
 .movers-heading h2{margin-right:10px}

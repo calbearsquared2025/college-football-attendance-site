@@ -82,7 +82,7 @@
     </div>
     <aside class="map-sidebar" aria-label="Attendance statistics and school history">
       <section class="stats-grid" aria-label="Comparison overview">
-    <div class="stat"><span id="comparableLabel">SCHOOLS COMPARED</span><strong id="comparableCount">—</strong><button type="button" id="unchangedCount" class="unchanged-link" hidden></button><span id="unchangedSchools" class="unchanged-list" hidden></span></div>
+    <div class="stat"><span id="comparableLabel">SCHOOLS COMPARED</span><strong id="comparableCount">—</strong></div>
     <div class="stat"><span id="medianStatLabel">MEDIAN CHANGE</span><strong id="medianChange">—</strong></div>
     <div class="stat"><span id="gainStatLabel">UP</span><strong id="gainCount">—</strong><small id="highSchoolName" hidden></small></div>
     <div class="stat"><span id="lossStatLabel">DOWN</span><strong id="lossCount">—</strong><small id="lowSchoolName" hidden></small></div>
@@ -93,12 +93,7 @@
     <div class="school-summary-heading"><h2 id="selectedName"></h2><button type="button" class="conference-link" id="selectedConference" title="Highlight this conference on the map"></button></div>
     <div class="school-stat"><span id="selectedNowLabel"></span><strong id="selectedNow">—</strong></div>
     <div class="school-stat"><span id="selectedBeforeLabel"></span><strong id="selectedBefore">—</strong></div>
-    <div class="school-stat"><span id="selectedDifferenceLabel">Change</span><strong id="selectedDifference">—</strong></div>
-    <div class="school-stat" id="selectedCapacityWrap" hidden>
-      <span>LISTED STADIUM CAPACITY</span><strong id="selectedCapacity">—</strong>
-      <small id="selectedCapacityContext"></small>
-      <small><a id="selectedCapacitySource" target="_blank" rel="noopener noreferrer" hidden>Capacity source</a></small>
-    </div>
+    <div class="school-stat school-stat--change"><span id="selectedDifferenceLabel">Change</span><strong id="selectedDifference">—</strong></div>
     <div class="quick-trend" aria-labelledby="quickTrendTitle">
       <div class="quick-trend-heading"><span id="quickTrendTitle">Attendance over time</span><a href="#trendTitle" id="quickTrendExpand" hidden>Detailed comparison ↓</a></div>
       <p id="quickTrendEmpty" hidden>Historical attendance unavailable for this school.</p>
