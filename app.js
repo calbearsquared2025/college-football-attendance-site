@@ -52,6 +52,7 @@ let pilotGames = [];
 let pilotWeekly = [];
 let publicWeeklySchool = new Map();
 let publicWeeklyConference = new Map();
+let publicOfficialGames = new Map();
 let disruptionRows = [];
 let verifiedSellouts = new Map();
 let availableYears = [];
@@ -1373,6 +1374,43 @@ function renderPilotWeeklyChart(schoolId,year) {
     : "2026 cumulative average by week · provisional regular-season reports; NCAA final annual pending";
 }
 
+/** Public 2026 chart values originate in separately verified official reports. */
+function renderPublicOfficialGameBars(schoolId) {
+  const rows=publicOfficialGames.get(schoolId)||[];
+  const tbody=$("gameDetailRows");
+  tbody.replaceChildren();
+  const maxAttendance=Math.max(1,...rows.map(row=>row[3]));
+  for (const [week,date,opponent,attendance,sourceUrl] of rows) {
+    const tr=document.createElement("tr");
+    const dateCell=document.createElement("td");
+    dateCell.textContent=`${date} · W${week}`;
+    const opponentCell=document.createElement("td");
+    opponentCell.textContent=opponent;
+    const citation=document.createElement("a");
+    citation.className="game-source-link";
+    citation.href=sourceUrl;
+    citation.target="_blank";
+    citation.rel="noopener noreferrer";
+    citation.textContent="Source";
+    citation.setAttribute("aria-label",`Official attendance source for ${opponent} on ${date}`);
+    opponentCell.append(citation);
+    const attendanceCell=document.createElement("td");
+    const content=document.createElement("div");
+    content.className="game-attendance-cell";
+    const number=document.createElement("span");
+    number.className="game-attendance-number";
+    number.textContent=attendanceFormat(attendance);
+    const track=document.createElement("span");
+    track.className="game-bar-track";
+    const bar=document.createElement("span");
+    bar.className="game-bar-fill";
+    bar.style.width=(attendance/maxAttendance*100).toFixed(1)+"%";
+    track.append(bar);content.append(number,track);attendanceCell.append(content);
+    tr.append(dateCell,opponentCell,attendanceCell);tbody.append(tr);
+  }
+  return rows.length;
+}
+
 const HOME_GAME_TIMEZONES = {
   AL:"America/Chicago",AR:"America/Chicago",AZ:"America/Phoenix",
   CA:"America/Los_Angeles",CO:"America/Denver",CT:"America/New_York",
@@ -1421,15 +1459,15 @@ async function renderCfbdGameDetails() {
   d3.select("#weeklyAverageChart").selectAll("*").remove();
   if (PUBLIC_BUILD) {
     $("gameDetailTitle").textContent=year===2026?`${name} · 2026 weekly attendance`:`${name} · inside the season`;
-    $("gameDetailStatus").textContent=year===2026
-      ? "School and conference cumulative weekly trends are displayed in rounded form; exact individual-game records remain private."
-      : "Historical individual-game records remain in the private research view; annual summaries are shown above.";
     $("gameDetailsSourceLink").href="./methodology.html#views";
     $("gameDetailsSourceLink").textContent="Source methodology";
     $("gameSourceNote").textContent=year===2026
-      ? "2026 provisional official university/conference reports, reconciled against CFBD home schedules. Weekly points are rounded, not game records."
+      ? "2026 provisional home-game attendance from official university and conference reports; dates and home designation checked against CFBD schedules."
       : "Public display limited to derived annual summaries; no individual-game feed is published.";
-    section.querySelector(".game-table-wrap").hidden=true;
+    section.querySelector(".game-table-wrap").hidden=year!==2026;
+    $("gameDetailStatus").textContent=year===2026
+      ? `${renderPublicOfficialGameBars(schoolId)} completed home games with reported attendance · provisional`
+      : "Historical individual-game records remain in the private research view; annual summaries are shown above.";
     renderPilotWeeklyChart(schoolId,year);
     return;
   }
@@ -1521,7 +1559,8 @@ async function bootPublic() {
       data.schools.length < 2500 || !Array.isArray(data.memberships) ||
       !data.freshness?.data_through || data.freshness.status !== "provisional" ||
       data.weekly_2026?.round_to_nearest !== 500 ||
-      !Array.isArray(data.weekly_2026.schools) || !Array.isArray(data.weekly_2026.conferences))
+      !Array.isArray(data.weekly_2026.schools) || !Array.isArray(data.weekly_2026.conferences) ||
+      data.games_2026?.season !== 2026 || !Array.isArray(data.games_2026.schools))
     throw new Error("Validated public attendance summary is missing or incomplete");
   const mapData = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json").catch(()=>null);
   membershipRows = data.memberships;
@@ -1537,6 +1576,7 @@ async function bootPublic() {
   ytdThrough = data.freshness.data_through;
   publicWeeklySchool = new Map(data.weekly_2026.schools.map(r=>[Number(r.school_id),r.points]));
   publicWeeklyConference = new Map(data.weekly_2026.conferences.map(r=>[r.conference,r.points]));
+  publicOfficialGames = new Map(data.games_2026.schools.map(r=>[Number(r.school_id),r.points]));
   schoolIndex = schoolYearIndex(schools);
   if (cohort.length < 130 || locations.size < 130 ||
       conferenceRows.length < 20 || historicalConferenceRows.length < 20 ||
