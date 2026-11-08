@@ -222,14 +222,14 @@ export function attendanceFormat(value) {
     Math.round(value).toLocaleString("en-US");
 }
 
-// Fixed, filter-independent display anchors; values above the cap saturate.
-// These are visualization scales, not estimated attendance values.
-export const MARKER_SCALE_CAPS = Object.freeze({pct: 100, absolute: 50000, attendance: 110000});
+// Fixed, filter-independent reference magnitudes for continuous marker scales.
+// Higher values continue to produce larger symbols without a hard cutoff.
+export const MARKER_SCALE_ANCHORS = Object.freeze({pct: 100, absolute: 50000, attendance: 110000});
 export function markerRadius(value, metric) {
   if (value === null || !Number.isFinite(value)) return 4.3;
-  const cap = MARKER_SCALE_CAPS[metric];
-  if (!cap) throw new Error(`Unknown map metric: ${metric}`);
-  return 5.2 + 8 * Math.sqrt(Math.min(1, Math.abs(value) / cap));
+  const anchor = MARKER_SCALE_ANCHORS[metric];
+  if (!anchor) throw new Error(`Unknown map metric: ${metric}`);
+  return 5.2 + 8 * Math.sqrt(Math.abs(value) / anchor);
 }
 
 export function customGroupMembers(cohort, selectedIds) {
@@ -569,8 +569,10 @@ export function arrowGeometry(value, metric = "pct", baselineAverage = null) {
     return {path:MAP_NEUTRAL_GLYPH_PATH,tipPath:MAP_NEUTRAL_TIP_PATH,
       hitSegments:[[-5,0,5,0],[.5,-3.2,5,0],[5,0,.5,3.2]],
       length:10,angleDeg:0,strokeWidth:1.5,magnitude:0,direction:0};
-  const cap = MARKER_SCALE_CAPS[metric];
-  const magnitude = Math.pow(Math.min(Math.abs(value) / cap, 1), .7);
+  const anchor = MARKER_SCALE_ANCHORS[metric];
+  // Log compression keeps extreme arrows legible while preserving differences
+  // even beyond the old 100% / 50,000-fan reference points.
+  const magnitude = Math.log1p(4 * Math.abs(value) / anchor) / Math.log(5);
   const length = 10 + 24 * magnitude;
   const angleDeg = 35;
   const angle = angleDeg * Math.PI / 180;

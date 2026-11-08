@@ -1,7 +1,7 @@
 import {
   FIRST_YEAR, LAST_YEAR, normalizeSchool, normalizeConference, normalizeLocation,
   schoolYearIndex, selectedPrograms, powerGroupMemberIds, compareSchool, compareProvisionalYtd, conferenceTrendSeries, conferenceLineageNames, coverageLabel,
-  changeFormat, attendanceFormat, markerRadius, MARKER_SCALE_CAPS, cfbdHomeGameDetails, buildNCAAAnnualChartData, buildCFBDGapAnnualChartData, buildEarlyAnnualChartData,
+  changeFormat, attendanceFormat, markerRadius, cfbdHomeGameDetails, buildNCAAAnnualChartData, buildCFBDGapAnnualChartData, buildEarlyAnnualChartData,
   arrowGeometry, isMapNeutral, MAP_NEUTRAL_PCT, sourceLabel, historicalConferenceSchoolSeries, aggregate2026Ytd, customGroupMembers, customGroupSeries,
   overlay2026OfficialGames, merge2026OfficialWeekly, conference2026Ytd,
   verifiedSelloutIndex, verifiedSelloutForGame,
