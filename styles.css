@@ -147,6 +147,7 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .game-table tr:hover td{background:#f0f2ed}
 .game-attendance-cell{display:flex;align-items:center;gap:13px}
 .game-attendance-number{min-width:70px;text-align:right;font-weight:600}
+.game-source-link{display:block;width:max-content;margin-top:3px;font-size:10px}
 .game-sellout-badge{display:inline-flex;align-items:center;flex-shrink:0;white-space:nowrap;border:1px solid #a8cbc0;border-radius:3px;padding:2px 6px;color:#216759;background:#edf5f1;text-decoration:none;font:600 10px/1.2 "DM Sans",Arial,sans-serif}
 .game-sellout-badge:hover{background:#dcefe7;text-decoration:underline}
 .game-bar-track{flex:1;min-width:70px;max-width:360px;height:9px;background:#ecefeb;position:relative;border-radius:1px}
