@@ -136,11 +136,11 @@ function seriesPointColor(item, observation) {
     conferenceColor(observation.conference) : item.color;
 }
 function benchmarkName(benchmark, school) {
-  if (benchmark.type==="historical") return "School's actual conference · changes each season";
-  if (benchmark.type==="fixed") return "2026 "+school.conference_2026+" schools · tracked backward";
-  if (benchmark.type==="custom") return "Your custom group · tracked backward";
+  if (benchmark.type==="historical") return "School's historical conference";
+  if (benchmark.type==="fixed") return "2026 "+school.conference_2026+" schools";
+  if (benchmark.type==="custom") return "Custom group";
   const lineage = benchmark.followLineage ? conferenceLineageNames(benchmark.conference) : null;
-  return (lineage ? lineage.join(" → ") : benchmark.conference)+" · actual historical members";
+  return (lineage ? lineage.join(" → ") : benchmark.conference)+" historical members";
 }
 function benchmarkFromControls() {
   const type=$("conferenceMode").value;
@@ -693,14 +693,15 @@ function renderMap() {
     state.target===2026 ? "2025 full season → 2026 YTD · provisional" :
       `${state.baseline} → ${state.target}`;
   const legend = document.querySelectorAll(".legend-item");
-  legend[0].lastElementChild.textContent = state.metric === "attendance" ? "Reported level" : "Increase ↗";
+  legend[0].lastElementChild.textContent = state.metric === "attendance" ? "Reported level" : "Increase";
+  legend[0].querySelector("i").classList.toggle("rise",state.metric!=="attendance");
   legend[0].querySelector("i").style.backgroundColor = state.metric === "attendance" ? "#a78c50" : "";
   legend[1].hidden = state.metric === "attendance";
   legend[2].lastElementChild.textContent = state.metric === "attendance" ? "Not reported" : "Not comparable";
   $("flatLegendItem").hidden = state.metric === "attendance";
   $("markerScaleLegend").textContent=state.metric==="attendance"
     ? "Larger circles = higher reported home attendance per game."
-    : "↗ increase · ↘ decrease · horizontal ≈ unchanged. Arrow length shows the size of the change. Zoom to separate nearby schools."+
+    : "Arrow direction shows increase, decrease or little change; length shows magnitude. Zoom to separate nearby schools."+
       (focusIds===null?"":" Highlighted schools appear in color; others are gray.");
   renderMagnitudeKey();
   svg.attr("aria-label",state.metric === "attendance"
@@ -1035,7 +1036,7 @@ function renderTrendStats(series) {
         " ("+(pct>0?"+":"")+pct.toFixed(1)+"%)",
       low?fmt(low.average)+" ("+low.year+")":"—",
       high?fmt(high.average)+" ("+high.year+")":"—",
-      fmt(weighted),observed.length+"/25",
+      fmt(weighted),String(observed.length),
     ];
     cells.forEach((value,i)=>{
       const cell=document.createElement("td");
@@ -1047,12 +1048,6 @@ function renderTrendStats(series) {
       tr.append(cell);
     });
     tbody.append(tr);
-  }
-  const school=series.find(item=>!item.benchmark);
-  if(school){
-    const available=school.data.filter(d=>d.year<=2025 && d.year!==2020 && d.average!==null).length;
-    $("seasonAvailabilityNote").textContent=
-      `Seasons = qualifying years from 2001–2025 (25 calendar years). 2020 is excluded due COVID crowd restrictions; ${school.name} has ${available}/25. No missing year is treated as zero.`;
   }
 }
 
@@ -1066,16 +1061,14 @@ function renderTrendChart() {
   $("trendTitle").textContent=selected.school_name+(schoolB?" vs. "+schoolB.school_name:"")+" · historical attendance";
   const primary=state.benchmarks[0];
   const membershipDescription=primary?.type==="historical" ?
-    "Conference membership follows each season; colors reflect those eras." :
+    "Conference colors follow historical membership." :
     primary?.type==="fixed" ?
-    `2026 ${selected.conference_2026} schools, tracked backward.` :
+    "The 2026 school group is held constant across seasons." :
     primary?.type==="selected" ?
-    `${primary.conference}: actual members in each season`+
-      (primary.followLineage?" (including named predecessors).":".") :
-    "Your custom schools, tracked backward.";
-  $("trendMembershipNote").textContent=membershipDescription+
-    " Attendance shown per home game."+
-    (schoolIndex.get(`${state.schoolId}:2026`)?.reported_home_games?" 2026 YTD is provisional.":"");
+    (primary.followLineage?"Includes documented predecessor conferences.":
+      "Conference membership follows each season.") :
+    "Custom school group held constant across seasons.";
+  $("trendMembershipNote").textContent=membershipDescription;
   $("customGroupControls").hidden=$("conferenceMode").value!=="custom" &&
     !state.benchmarks.some(item=>item.type==="custom");
   renderBenchmarkChips(selected);
@@ -1113,11 +1106,11 @@ function renderTrendChart() {
     .filter(d=>d.year<2026 && d.eligible>0 && d.average===null).map(d=>d.year)));
   const annotated=series.some(s=>!s.benchmark && s.data.some(d=>d.average!==null &&
     disruptionsStarting(disruptionRows,s.schoolId,d.year).length));
-  $("trendCoverageNote").textContent=(withheld.size ?
-    [...withheld].sort().map(year=>year===2020?"2020 unavailable":year+" benchmark withheld").join(" · ")+
-      " · missing values not estimated." :
-    "Gaps indicate unavailable data; no interpolation.")+
-    (annotated?" Amber rings mark documented attendance context; reported figures are unchanged.":"");
+  const coverageNote=(withheld.size ?
+    [...withheld].sort().map(year=>year===2020?"2020 unavailable":year+" benchmark unavailable").join(" · ") : "")+
+    (annotated?(withheld.size?" · ":"")+"Amber rings mark documented attendance context.":"");
+  $("trendCoverageNote").textContent=coverageNote;
+  $("trendCoverageNote").hidden=!coverageNote;
   const svg=d3.select("#trendChart");svg.selectAll("*").remove();
   svg.attr("aria-label","Annual home attendance for "+series.map(s=>s.name).join(", ")+
     ", 2001–2026. Use left and right arrows to inspect years.");
@@ -1290,7 +1283,28 @@ function renderTrendChart() {
         "No source-qualified attendance reported for this season.";
     }
     tooltip.append(note);tooltip.hidden=false;
+    positionTrendTooltip();
   }
+  const chartViewport=svg.node().parentElement;
+  function positionTrendTooltip(){
+    const tooltip=$("trendTooltip");
+    tooltip.style.right="auto";
+    if(window.matchMedia("(max-width: 620px)").matches){
+      const viewportRect=chartViewport.getBoundingClientRect();
+      tooltip.style.position="fixed";
+      tooltip.style.left=Math.max(8,viewportRect.right-tooltip.offsetWidth-8)+"px";
+      tooltip.style.top=Math.max(8,Math.min(window.innerHeight-tooltip.offsetHeight-8,
+        viewportRect.top+8))+"px";
+      return;
+    }
+    tooltip.style.position="absolute";
+    tooltip.style.top="45px";
+    const left=Math.max(8,chartViewport.clientWidth-tooltip.offsetWidth-8);
+    tooltip.style.left=(chartViewport.scrollLeft+left)+"px";
+  }
+  chartViewport.onscroll=()=>{
+    if(!$("trendTooltip").hidden)positionTrendTooltip();
+  };
   svg.on("pointermove",event=>{
     const [px]=d3.pointer(event,svg.node());
     if(px<margin.left||px>w-margin.right)return;
