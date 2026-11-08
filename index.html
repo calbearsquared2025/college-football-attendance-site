@@ -9,12 +9,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=c9870c29f310">
   <script src="./theme.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
   <script>window.__PUBLIC_ATTENDANCE_BUILD__ = true;</script>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=2009739dff9e"></script>
 </head>
 <body>
 <a class="skip-link" href="#explore">Skip to explorer</a>
@@ -63,10 +63,10 @@
       </div>
       <div class="map-footer">
         <div class="map-legend" aria-label="Map legend">
-          <span class="legend-item"><i class="legend-symbol rise"></i> <span>Increase</span></span>
-          <span class="legend-item"><i class="legend-symbol fall"></i> <span>Decrease</span></span>
-          <span class="legend-item"><i class="legend-symbol unavailable"></i> <span>Unavailable</span></span>
+          <span class="legend-item" id="riseLegendItem"><i class="legend-symbol rise"></i> <span>Increase</span></span>
+          <span class="legend-item" id="fallLegendItem"><i class="legend-symbol fall"></i> <span>Decrease</span></span>
           <span class="legend-item" id="flatLegendItem"><i class="legend-symbol flat"></i> <span>Stable (&lt;1%)</span></span>
+          <span class="legend-item" id="unavailableLegendItem"><i class="legend-symbol unavailable"></i> <span>Unavailable</span></span>
         </div>
         <span id="mapStatus" class="map-footnote">Loading attendance data…</span>
       </div>
@@ -95,8 +95,8 @@
       <p id="quickTrendEmpty" hidden>Historical attendance unavailable for this school.</p>
       <svg id="quickTrendChart" viewBox="0 0 390 145" role="img" aria-label="Selected school's historical attendance trend" hidden></svg><div id="quickTrendTooltip" class="quick-trend-tooltip" role="status" hidden></div>
     </div>
-    <div class="school-source"><span id="selectedCoverage"></span><a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
-    <div class="school-source" id="baselineSourceRow" hidden><span id="baselineCoverage"></span><a id="baselineReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
+    <div class="school-source"><span id="selectedCoverage"></span> <a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
+    <div class="school-source" id="baselineSourceRow" hidden><span id="baselineCoverage"></span> <a id="baselineReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
     <p id="disruptionNotice" class="disruption-notice" role="note" hidden></p>
     <p id="annualSpecialNote" class="source-exception" hidden></p>
     <span id="selectedStadium" class="visually-hidden"></span>

@@ -711,12 +711,12 @@ function renderMap() {
     state.target === 2026 ? "2026 YTD · official reports" : `${state.target} season` :
     state.target===2026 ? "2025 full season → 2026 YTD · provisional" :
       `${state.baseline} → ${state.target}`;
-  const legend = document.querySelectorAll(".legend-item");
-  legend[0].lastElementChild.textContent = state.metric === "attendance" ? "Reported level" : "Increase";
-  legend[0].querySelector("i").classList.toggle("rise",state.metric!=="attendance");
-  legend[0].querySelector("i").style.backgroundColor = state.metric === "attendance" ? "#a78c50" : "";
-  legend[1].hidden = state.metric === "attendance";
-  legend[2].lastElementChild.textContent = state.metric === "attendance" ? "Not reported" : "Not comparable";
+  const riseLegend = $("riseLegendItem");
+  riseLegend.lastElementChild.textContent = state.metric === "attendance" ? "Reported level" : "Increase";
+  riseLegend.querySelector("i").classList.toggle("rise",state.metric!=="attendance");
+  riseLegend.querySelector("i").style.backgroundColor = state.metric === "attendance" ? "#a78c50" : "";
+  $("fallLegendItem").hidden = state.metric === "attendance";
+  $("unavailableLegendItem").lastElementChild.textContent = state.metric === "attendance" ? "Not reported" : "Not comparable";
   $("flatLegendItem").hidden = state.metric === "attendance";
   $("markerScaleLegend").hidden=state.metric!=="attendance";
   $("markerScaleLegend").textContent=state.metric==="attendance"

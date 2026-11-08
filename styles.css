@@ -66,7 +66,7 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .map-zoom{position:absolute;bottom:9px;right:9px;display:flex;gap:2px}
 .map-zoom button{width:32px;height:32px;border:1px solid #d2d6d2;background:#fff;color:#45545a;font-size:16px;border-radius:2px}
 .map-zoom button:hover{background:#f1f2ef}
-.map-zoom #zoomReset{font-size:10px;font-weight:600}
+.map-zoom #zoomReset{width:52px;font-size:12px;font-weight:600}
 .map-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--rule);padding:9px 0 0}
 .map-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:#4e5b60}
 .legend-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -80,7 +80,7 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .legend-symbol.flat{width:12px;height:2px;border-radius:0;background:#52636a;position:relative}
 .legend-symbol.flat::after{content:"";position:absolute;right:0;top:-2.5px;width:5px;height:5px;border-top:1.6px solid #52636a;border-right:1.6px solid #52636a;transform:rotate(45deg)}
 .map-length-key{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:0 0 10px;font-size:11px;color:#667377}
-.map-length-key[hidden],#flatLegendItem[hidden]{display:none}
+.map-length-key[hidden],.legend-item[hidden]{display:none}
 .map-length-lead{font-weight:600;color:#4e5b60}
 .map-length-samples{display:flex;align-items:center;gap:17px;flex-wrap:wrap}
 .map-length-item{display:flex;align-items:center;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -104,7 +104,7 @@ main{max-width:1258px;margin:0 auto;padding:0 24px 50px}
 .school-stat--change{grid-column:1/-1}
 .school-stat span{font-size:10px;color:var(--soft)}
 .school-stat strong{font-size:19px;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
-.school-source{display:flex;grid-column:1/-1;gap:8px;align-items:center;color:var(--soft);font-size:11px;max-width:none}
+.school-source{display:flex;grid-column:1/-1;gap:.35em;align-items:center;color:var(--soft);font-size:11px;max-width:none}
 .school-source a{white-space:nowrap}
 .school-source[hidden]{display:none}
 .source-exception{grid-column:1/-1;font-size:11px;color:#6b6660;margin:0}
