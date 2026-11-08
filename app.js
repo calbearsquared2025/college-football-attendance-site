@@ -573,7 +573,7 @@ function showTooltip(event, point) {
   if (!level && mapNeutral(point)) {
     const note=document.createElement("small");
     note.className="map-tooltip-neutral";
-    note.textContent=`→ Near-flat arrow (under ${MAP_NEUTRAL_PCT}% of baseline); displayed change is rounded.`;
+    note.textContent=`Near-flat arrow (under ${MAP_NEUTRAL_PCT}% of baseline); displayed change is rounded.`;
     tip.append(note);
   }
   const context=attendanceContext(point.school_id);
@@ -775,7 +775,7 @@ function renderSchoolCard() {
   baselineLink.hidden=level||!before?.source_url;
   if(before?.source_url) {
     baselineLink.href=before.source_url;
-    baselineLink.textContent=`View ${baselineYear} source ↗`;
+    baselineLink.textContent=`View ${baselineYear} source`;
   }
   const special = $("annualSpecialNote");
   const exception = item.school_name === "LSU" && state.target === 2015 && after
@@ -796,11 +796,11 @@ function renderSchoolCard() {
     if(state.target===2026) {
       link.href="#gameDetailTitle";
       link.removeAttribute("target");
-      link.textContent="Game sources ↓";
+      link.textContent="Game sources";
     } else {
       link.href=after.source_url;
       link.target="_blank";
-      link.textContent=`View ${state.target} source ↗`;
+      link.textContent=`View ${state.target} source`;
     }
   }
   $("selectedStadium").textContent = locations.get(state.schoolId)?.stadium || "2026 stadium location unavailable";
