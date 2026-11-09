@@ -1,23 +1,23 @@
 import {
   FIRST_YEAR, LAST_YEAR, normalizeSchool, normalizeConference, normalizeLocation,
-  schoolYearIndex, selectedPrograms, powerGroupMemberIds, compareSchool, compareProvisionalYtd, conferenceTrendSeries, conferenceLineageNames, coverageLabel,
+  schoolYearIndex, selectedPrograms, powerGroupMemberIds, compareSchool, compareProvisionalYtd, conferenceTrendSeries, conferenceLineageNames,
   changeFormat, attendanceFormat, markerRadius, cfbdHomeGameDetails, buildNCAAAnnualChartData, buildCFBDGapAnnualChartData, buildEarlyAnnualChartData,
   arrowGeometry, isMapNeutral, MAP_NEUTRAL_PCT, sourceLabel, historicalConferenceSchoolSeries, aggregate2026Ytd, customGroupMembers, customGroupSeries,
   overlay2026OfficialGames, merge2026OfficialWeekly, conference2026Ytd,
-  verifiedSelloutIndex, verifiedSelloutForGame,
+  verifiedSelloutIndex, verifiedSelloutForGame, weeklyReportedGroupSeries, weeklyBenchmarkSchoolIds,
 } from "./model.mjs";
 import {teamPalette, conferenceColor, colorsTooSimilar} from "./palettes.mjs";
 import {normalizeDisruption, disruptionsInSeason, disruptionsStarting, disruptionsForComparison} from "./disruptions.mjs";
+import {suggestedComparisonsFor} from "./suggested-comparisons.mjs?v=d4db359838be";
 
 const d3 = window.d3;
 const topojson = window.topojson;
 const PUBLIC_BUILD = window.__PUBLIC_ATTENDANCE_BUILD__ === true;
 
 const state = { baseline: 2019, target: 2025, metric: "pct", conference: "All", mapFocus: "all", schoolId: null,
-  schoolBId: null, conferenceMode: "historical", selectedConference: "ACC",
-  followLineage: false, groupIds: [], moverType:"school", keyStatsMembership:"fixed",
+  schoolBId: null, selectedConference: "ACC",
+  groupIds: [], moverType:"school", keyStatsMembership:"fixed",
   benchmarks:[{key:"historical",type:"historical"}] };
-const colors = { rise: "#1c9d91", fall: "#e47866", level: "#e9b55e", missing: "#647f88" };
 const $ = id => document.getElementById(id);
 const themeColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function formattedChange(value,metric) {
@@ -67,9 +67,10 @@ function ytdDataThroughLabel() {
 }
 let pilotGames = [];
 let pilotWeekly = [];
-let publicWeeklySchool = new Map();
-let publicWeeklyConference = new Map();
+let publicWeeklyThroughWeek = 0;
 let publicOfficialGames = new Map();
+let weeklySeriesSchoolId = null;
+const hiddenWeeklySeries = new Set();
 let disruptionRows = [];
 let verifiedSellouts = new Map();
 let availableYears = [];
@@ -181,7 +182,8 @@ function changePrimaryBenchmark() {
   const candidate=benchmarkFromControls();
   const extra=state.benchmarks.slice(1).filter(entry=>entry.key!==candidate.key);
   state.benchmarks=[candidate,...extra];
-  renderTrendChart();
+  hiddenWeeklySeries.clear();
+  refreshSelectedSeriesCharts();
 }
 function addAnotherBenchmark(value) {
   if(!value || state.benchmarks.length>=3)return;
@@ -192,7 +194,8 @@ function addAnotherBenchmark(value) {
     state.benchmarks.push(candidate);
   $("additionalBenchmarkField").hidden=true;
   $("additionalBenchmarkSelect").value="";
-  renderTrendChart();
+  hiddenWeeklySeries.clear();
+  refreshSelectedSeriesCharts();
 }
 function renderBenchmarkChips(school) {
   const container=$("benchmarkChips");container.replaceChildren();
@@ -212,7 +215,8 @@ function renderBenchmarkChips(school) {
     element.append(swatch,label);
     if(i!==0)element.addEventListener("click",()=>{
       state.benchmarks=state.benchmarks.filter(item=>item.key!==benchmark.key);
-      renderTrendChart();
+      hiddenWeeklySeries.clear();
+      refreshSelectedSeriesCharts();
     });
     container.append(element);
   });
@@ -335,7 +339,9 @@ function setupControls() {
     render();
   });
   $("clearMapSelection").addEventListener("click",()=>{
-    // Clear the map focus and school details, not the comparison years or metric.
+    // Clear persistent selection and any touch-sticky map overlay.
+    hideTooltip();
+    closeSchoolChooser();
     state.mapFocus="all";
     state.schoolId=null;
     state.schoolBId=null;
@@ -355,14 +361,7 @@ function setupControls() {
     state.schoolId=null;render();
   });
   $("schoolBFilter").addEventListener("change", () => {
-    const next = $("schoolBFilter").value ? Number($("schoolBFilter").value) : null;
-    if (next !== null && state.schoolId === null) {
-      state.schoolId = next; $("schoolFilter").value = next; state.schoolBId = null; $("schoolBFilter").value = "";
-      render(); return;
-    }
-    state.schoolBId = next === state.schoolId ? null : next;
-    if (state.schoolBId === null) $("schoolBFilter").value = "";
-    renderTrendChart();
+    selectComparisonSchool($("schoolBFilter").value ? Number($("schoolBFilter").value) : null);
   });
   $("conferenceMode").addEventListener("change",changePrimaryBenchmark);
   $("comparisonConference").addEventListener("change",()=>{if($("conferenceMode").value==="selected")changePrimaryBenchmark();});
@@ -396,6 +395,44 @@ function setupControls() {
   $("zoomIn").addEventListener("click",()=>d3.select("#atlasMap").transition().duration(160).call(zoom.scaleBy,1.35));
   $("zoomOut").addEventListener("click",()=>d3.select("#atlasMap").transition().duration(160).call(zoom.scaleBy,1/1.35));
   $("zoomReset").addEventListener("click",()=>d3.select("#atlasMap").transition().duration(160).call(zoom.transform,d3.zoomIdentity));
+}
+
+function selectComparisonSchool(next) {
+  if (next !== null && state.schoolId === null) {
+    state.schoolId = next; $("schoolFilter").value = next; state.schoolBId = null; $("schoolBFilter").value = "";
+    render(); return;
+  }
+  state.schoolBId = next === state.schoolId ? null : next;
+  if (state.schoolBId === null) $("schoolBFilter").value = "";
+  refreshSelectedSeriesCharts();
+}
+
+function refreshSelectedSeriesCharts() {
+  renderTrendChart();
+  if (PUBLIC_BUILD && state.schoolId!==null && !$('weeklyTrendWrap').hidden)
+    renderPilotWeeklyChart(state.schoolId,2026);
+}
+
+function renderSuggestedComparisons() {
+  const container=$("suggestedComparisons");
+  container.replaceChildren();
+  const suggestions=suggestedComparisonsFor(state.schoolId,cohort);
+  container.hidden=suggestions.length===0;
+  if(!suggestions.length)return;
+  const caption=document.createElement("span");
+  caption.className="suggested-comparisons-label";
+  caption.textContent="Suggested:";
+  container.append(caption);
+  for(const school of suggestions){
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="suggested-school-chip";
+    button.textContent=school.school_name;
+    button.setAttribute("aria-label","Compare with "+school.school_name);
+    button.setAttribute("aria-pressed",String(Number(school.school_id)===state.schoolBId));
+    button.addEventListener("click",()=>selectComparisonSchool(Number(school.school_id)===state.schoolBId ? null : Number(school.school_id)));
+    container.append(button);
+  }
 }
 
 function synchronizeYears() {
@@ -436,18 +473,6 @@ function initializeMap(geo) {
         !event.target.closest(".map-marker")) closeSchoolChooser();
   });
 }
-
-function signColor(point) {
-  if (point.value === null) return colors.missing;
-  if (state.metric === "attendance") return colors.level;
-  return point.value >= 0 ? colors.rise : colors.fall;
-}
-
-function arrowPath(up) {
-  return up ? "M0,6V-7M-5,-2L0,-7L5,-2" : "M0,-6V7M-5,2L0,7L5,2";
-}
-
-function radiusFor(point) { return markerRadius(point.value, state.metric); }
 
 function attendanceContext(schoolId) {
   return state.metric==="attendance"||state.target<=state.baseline ?
@@ -1007,7 +1032,7 @@ function renderStats() {
     comparableLabel:"REPORTING SCHOOLS",medianStatLabel:"MEDIAN / GAME",
     gainStatLabel:"HIGHEST / GAME",lossStatLabel:"LOWEST / GAME"
   } : {
-    comparableLabel:"SCHOOLS COMPARED",medianStatLabel:"MEDIAN CHANGE",
+    comparableLabel:"SCHOOLS COMPARED",medianStatLabel:state.metric==="absolute"?"MEDIAN CHANGE / GAME":"MEDIAN % CHANGE",
     gainStatLabel:"UP",lossStatLabel:"DOWN"
   })) $(id).textContent=label;
   $("comparableLabel").title=levelMode ?
@@ -1030,7 +1055,7 @@ function renderStats() {
     $("comparableCount").textContent=comparable.length;
     $("gainCount").textContent=changes.filter(v=>v>0).length;
     $("lossCount").textContent=changes.filter(v=>v<0).length;
-    $("medianChange").textContent=formattedChange(changes.length?d3.median(changes):null,"pct");
+    $("medianChange").textContent=formattedChange(changes.length?d3.median(changes):null,state.metric);
     $("medianLabel").textContent=`Comparable programs · ${state.baseline}–${state.target}${state.target===2026?" YTD provisional":""}`;
   }
   $("comparisonNotice").hidden=state.target!==2026;
@@ -1193,6 +1218,7 @@ function renderTrendChart() {
   section.hidden=false;
   const schoolB=cohort.find(s=>Number(s.school_id)===state.schoolBId);
   $("schoolBFilter").value=schoolB?String(state.schoolBId):"";
+  renderSuggestedComparisons();
   $("trendTitle").textContent=selected.school_name+(schoolB?" vs. "+schoolB.school_name:"")+" · historical attendance";
   const primary=state.benchmarks[0];
   const membershipDescription=primary?.type==="historical" ?
@@ -1465,62 +1491,113 @@ function renderTrendChart() {
 function renderPilotWeeklyChart(schoolId,year) {
   const wrap=$("weeklyTrendWrap"),svg=d3.select("#weeklyAverageChart");
   svg.selectAll("*").remove();
+  const legend=$("weeklySeriesKey");legend.replaceChildren();
   const school=cohort.find(s=>Number(s.school_id)===schoolId);
-  const all=year!==2026 ? [] : PUBLIC_BUILD
-    ? (publicWeeklySchool.get(schoolId)||[]).map(([week,average])=>({week,average_reported_attendance:average}))
-    : pilotWeekly.filter(r=>Number(r.school_id)===schoolId);
-  const conf=school?.conference_2026;
-  const confPoints=PUBLIC_BUILD && year===2026
-    ? (publicWeeklyConference.get(conf)||[]).map(([week,average])=>({week,average})) : [];
   const palette=teamPalette(schoolId);
-  // Public weekly chart records intentionally omit exact source-game counts.
-  const points=(PUBLIC_BUILD?all:all.filter(r=>Number(r.reported_home_games)>0)).map(r=>({
-    week:Number(r.week),average:Number(r.average_reported_attendance),
-    reported:PUBLIC_BUILD?null:Number(r.reported_home_games),
-    completed:PUBLIC_BUILD?null:Number(r.completed_home_games),
-  })).filter(r=>Number.isFinite(r.average)).sort((a,b)=>a.week-b.week);
+  if (weeklySeriesSchoolId!==schoolId){
+    hiddenWeeklySeries.clear();weeklySeriesSchoolId=schoolId;
+  }
+  const points=year!==2026?[]:PUBLIC_BUILD
+    ? weeklyReportedGroupSeries([schoolId],publicOfficialGames,publicWeeklyThroughWeek)
+    : pilotWeekly.filter(r=>Number(r.school_id)===schoolId && Number(r.reported_home_games)>0)
+      .map(r=>({week:Number(r.week),average:Number(r.average_reported_attendance),
+        reportedGames:Number(r.reported_home_games),reportingSchools:1}))
+      .filter(r=>Number.isFinite(r.average)).sort((a,b)=>a.week-b.week);
   wrap.hidden=!points.length;
   if (!points.length) return;
-  const width=1050,height=178,margin={top:24,right:95,bottom:33,left:68};
-  const values=[...points,...confPoints];
+  const second=PUBLIC_BUILD?cohort.find(s=>Number(s.school_id)===state.schoolBId):null;
+  const secondPalette=second?teamPalette(state.schoolBId):null;
+  const sameColors=secondPalette && colorsTooSimilar(palette.primary,secondPalette.primary);
+  const series=[
+    {key:"school",name:school.school_name,points,color:palette.primary,width:2.7,primary:true},
+    ...(second?[{key:"school-b",name:second.school_name,
+      points:weeklyReportedGroupSeries([state.schoolBId],publicOfficialGames,publicWeeklyThroughWeek),
+      color:secondPalette.primary,width:2.5,dash:sameColors?"7 3":null}]:[]),
+    ...(PUBLIC_BUILD?state.benchmarks.map(entry=>({
+      key:"benchmark:"+entry.key,name:benchmarkName(entry,school),
+      points:weeklyReportedGroupSeries(weeklyBenchmarkSchoolIds(entry,school,cohort,state.groupIds),
+        publicOfficialGames,publicWeeklyThroughWeek),
+      color:benchmarkColor(entry,school),dash:"5 4",width:1.9,
+    })):[]),
+  ];
+  const plotted=series.filter(item=>item.points.length>0);
+  // Height follows selected series, not the temporarily hidden legend state.
+  const width=1050,height=plotted.length>=3?230:178;
+  const margin={top:24,right:95,bottom:33,left:68};
+  svg.attr("viewBox","0 0 "+width+" "+height);
+  const visible=plotted.filter(item=>!hiddenWeeklySeries.has(item.key));
+  const values=visible.flatMap(item=>item.points);
   const min=d3.min(values,d=>d.average),max=d3.max(values,d=>d.average);
   const pad=Math.max(1800,(max-min)*.22);
-  const x=d3.scaleLinear().domain([0,d3.max([...all,...confPoints],d=>Number(d.week))||8])
-    .range([margin.left,width-margin.right]);
+  const lastWeek=d3.max(plotted.flatMap(item=>item.points),d=>d.week)||8;
+  const x=d3.scaleLinear().domain([0,lastWeek]).range([margin.left,width-margin.right]);
   const y=d3.scaleLinear().domain([Math.max(0,min-pad),max+pad])
     .range([height-margin.bottom,margin.top]);
-  svg.append("g").attr("class","chart-axis").attr("transform",`translate(0,${height-margin.bottom})`)
-    .call(d3.axisBottom(x).ticks(8).tickFormat(d=>Number.isInteger(d)?`W${d}`:""));
-  svg.append("g").attr("class","chart-axis").attr("transform",`translate(${margin.left},0)`)
-    .call(d3.axisLeft(y).ticks(3).tickFormat(d=>`${Math.round(d/1000)}k`));
-  svg.append("path").datum(points).attr("class","chart-line")
-    .attr("stroke",palette.primary).attr("stroke-width",2.5)
-    .attr("d",d3.line().x(d=>x(d.week)).y(d=>y(d.average)));
-  svg.selectAll("circle").data(points).join("circle")
-    .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average)).attr("r",3.8)
-    .attr("fill",palette.primary).attr("stroke",palette.primary).attr("stroke-width",1.1)
-    .append("title").text(d=>PUBLIC_BUILD
-      ? `Week ${d.week}: ${attendanceFormat(d.average)}/game (cumulative)`
-      : `Week ${d.week}: ${attendanceFormat(d.average)} / game · ${d.reported} reported of ${d.completed}`);
-  if(PUBLIC_BUILD && confPoints.length) {
-    const benchmarkColor=conferenceColor(conf);
-    svg.append("path").datum(confPoints).attr("fill","none")
-      .attr("stroke",benchmarkColor).attr("stroke-width",1.8).attr("stroke-dasharray","5 4")
-      .attr("d",d3.line().x(d=>x(d.week)).y(d=>y(d.average)));
-    svg.selectAll(".weekly-conference-dot").data(confPoints).join("circle")
-      .attr("class","weekly-conference-dot")
-      .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average)).attr("r",2.3)
-      .attr("fill",benchmarkColor)
-      .append("title").text(d=>`${conf} · W${d.week}: ${attendanceFormat(d.average)}/game (cumulative)`);
+  svg.append("g").attr("class","chart-axis").attr("transform",
+    "translate(0,"+(height-margin.bottom)+")")
+    .call(d3.axisBottom(x).ticks(8).tickFormat(d=>Number.isInteger(d)?"W"+d:""));
+  svg.append("g").attr("class","chart-axis").attr("transform",
+    "translate("+margin.left+",0)")
+    .call(d3.axisLeft(y).ticks(height>178?4:3).tickFormat(d=>Math.round(d/1000)+"k"));
+  const line=d3.line().x(d=>x(d.week)).y(d=>y(d.average));
+  for(const item of visible){
+    const layer=svg.append("g").datum(item).attr("class","weekly-series");
+    layer.append("path").datum(item.points).attr("class","chart-line")
+      .attr("fill","none").attr("stroke",item.color)
+      .attr("stroke-width",item.width).attr("stroke-dasharray",item.dash||null)
+      .attr("d",line);
+    layer.selectAll("circle").data(item.points).join("circle")
+      .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average))
+      .attr("r",item.primary?3.8:2.6)
+      .attr("fill",item.color).append("title")
+      .text(d=>item.name+" · W"+d.week+": "+attendanceFormat(d.average)+
+        " fans/game (cumulative · "+d.reportedGames+" game"+
+        (d.reportedGames===1?"":"s")+" · "+d.reportingSchools+" school"+
+        (d.reportingSchools===1?"":"s")+" reporting)");
   }
-  const last=points.at(-1);
-  svg.append("text").attr("x",x(last.week)+9).attr("y",y(last.average)+4)
-    .attr("fill",palette.primary).attr("font-size",12).attr("font-weight",600)
-    .text(attendanceFormat(last.average));
-  svg.attr("aria-label",`2026 cumulative attendance average for ${school?.school_name}${PUBLIC_BUILD?`, with ${conf} conference benchmark`:""}; provisional`);
+  if(!hiddenWeeklySeries.has("school")){
+    const last=points.at(-1);
+    svg.append("text").attr("x",x(last.week)+9).attr("y",y(last.average)+4)
+      .attr("fill",palette.primary).attr("font-size",12).attr("font-weight",600)
+      .text(attendanceFormat(last.average));
+  }
+  for(const item of series){
+    const available=item.points.length>0;
+    const toggle=!item.primary&&available;
+    const element=document.createElement(toggle?"button":"span");
+    element.className="weekly-series-item"+
+      (hiddenWeeklySeries.has(item.key)?" is-hidden":"");
+    if(toggle){
+      element.type="button";
+      element.setAttribute("aria-pressed",String(!hiddenWeeklySeries.has(item.key)));
+      element.setAttribute("aria-label",
+        (hiddenWeeklySeries.has(item.key)?"Show ":"Hide ")+item.name+" on 2026 chart");
+      element.addEventListener("click",()=>{
+        if(hiddenWeeklySeries.has(item.key))hiddenWeeklySeries.delete(item.key);
+        else hiddenWeeklySeries.add(item.key);
+        renderPilotWeeklyChart(schoolId,year);
+      });
+      const focus=()=>svg.selectAll(".weekly-series")
+        .style("opacity",d=>d.key===item.key?1:0.2);
+      const reset=()=>svg.selectAll(".weekly-series").style("opacity",1);
+      element.addEventListener("mouseenter",focus);
+      element.addEventListener("mouseleave",reset);
+      element.addEventListener("focus",focus);
+      element.addEventListener("blur",reset);
+    }
+    const swatch=document.createElement("i");
+    swatch.className="key-line"+(item.dash?" dashed":"");
+    swatch.style.background=item.color;
+    const label=document.createElement("span");
+    label.textContent=item.name+(available?"":" (no 2026 reports)");
+    element.append(swatch,label);
+    legend.append(element);
+  }
+  svg.attr("aria-label","2026 cumulative reported home attendance: "+
+    visible.map(item=>item.name).join(", ")+"; provisional");
   $("weeklyChartCaption").textContent=PUBLIC_BUILD
-    ? `Cumulative average by week · ${conf} benchmark (dashed)`
-    : "2026 cumulative average by week · provisional regular-season reports; NCAA final annual pending";
+    ? "2026 cumulative fans per home game · reported games only · provisional"
+    : "2026 cumulative average by week · provisional regular-season reports";
 }
 
 /** Public 2026 chart values originate in separately verified official reports. */
@@ -1708,6 +1785,7 @@ window.addEventListener("attendance-theme-change", () => {
 });
 
 function render() {
+  if(state.schoolId===null){hiddenWeeklySeries.clear();weeklySeriesSchoolId=null;}
   syncMapFocusControls();
   mapPoints=selectedPrograms(cohort,schoolIndex,locations,{...state,conference:"All"});
   const ids=activeFocusIds();
@@ -1740,8 +1818,8 @@ async function bootPublic() {
   verifiedCapacities = new Map(data.capacities.map(row=>[Number(row.school_id),row]));
   disruptionRows = data.disruptions.map(normalizeDisruption);
   ytdThrough = data.freshness.data_through;
-  publicWeeklySchool = new Map(data.weekly_2026.schools.map(r=>[Number(r.school_id),r.points]));
-  publicWeeklyConference = new Map(data.weekly_2026.conferences.map(r=>[r.conference,r.points]));
+  publicWeeklyThroughWeek = Math.max(0,...data.weekly_2026.schools.flatMap(row=>
+    row.points.map(point=>Number(point[0]))));
   publicOfficialGames = new Map(data.games_2026.schools.map(r=>[Number(r.school_id),r.points]));
   schoolIndex = schoolYearIndex(schools);
   if (cohort.length < 130 || locations.size < 130 ||

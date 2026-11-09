@@ -237,6 +237,55 @@ export function customGroupMembers(cohort, selectedIds) {
   return cohort.filter(s => ids.has(Number(s.school_id)));
 }
 
+/** Resolve an annual benchmark's membership for the 2026 weekly view. */
+export function weeklyBenchmarkSchoolIds(benchmark, school, cohort, groupIds) {
+  if(benchmark.type==="custom")
+    return customGroupMembers(cohort,groupIds).map(member=>Number(member.school_id));
+  if(!["historical","fixed","selected"].includes(benchmark.type))
+    throw new Error("Unknown 2026 weekly benchmark: "+benchmark.type);
+  const conference=benchmark.type==="selected"?benchmark.conference:school.conference_2026;
+  return cohort.filter(member=>member.conference_2026===conference)
+    .map(member=>Number(member.school_id));
+}
+
+/**
+ * Cumulative home attendance per reported game for any 2026 school cohort.
+ * An absent game is never treated as zero; later weeks retain the last average.
+ * The caller supplies the latest verified week so all comparison lines align.
+ */
+export function weeklyReportedGroupSeries(schoolIds, gamesBySchool, throughWeek) {
+  const totalsByWeek=new Map();
+  const ids=new Set(schoolIds.map(Number).filter(Number.isInteger));
+  for(const id of ids){
+    for(const game of gamesBySchool.get(id)||[]){
+      const week=Number(game[0]),attendance=Number(game[3]);
+      if(!Number.isInteger(week)||week<0||!Number.isFinite(attendance)||
+        game[3]===null||game[3]===""||attendance<0)continue;
+      let weekTotal=totalsByWeek.get(week);
+      if(!weekTotal){weekTotal={attendance:0,games:0,schools:new Set()};totalsByWeek.set(week,weekTotal);}
+      weekTotal.attendance+=attendance;
+      weekTotal.games++;
+      weekTotal.schools.add(id);
+    }
+  }
+  if(!totalsByWeek.size)return [];
+  const first=Math.min(...totalsByWeek.keys());
+  const last=Math.max(first,Number.isInteger(throughWeek)?throughWeek:first);
+  const reportedSchools=new Set();
+  const points=[];
+  let total=0,games=0;
+  for(let week=first;week<=last;week++){
+    const additions=totalsByWeek.get(week);
+    if(additions){
+      total+=additions.attendance;
+      games+=additions.games;
+      for(const id of additions.schools)reportedSchools.add(id);
+    }
+    points.push({week,average:total/games,reportedGames:games,reportingSchools:reportedSchools.size});
+  }
+  return points;
+}
+
 export function customGroupSeries(members, schoolIndex) {
   const ids = [...new Set(members.map(s => Number(s.school_id)))];
   return Array.from({length: LAST_YEAR-FIRST_YEAR+1},(_,i)=>{
