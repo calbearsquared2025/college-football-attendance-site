@@ -470,3 +470,13 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
  .conference-comparison-summary .conference-comparison-subtitle{order:3;flex-basis:100%;font-size:10px}
  .conference-comparison-action{font-size:11px}
 }
+
+/* Contextual Key Stats and selected-school details in the map sidebar. */
+.sidebar-view-switch{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--rule);margin:0 0 12px}
+.sidebar-view-button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--soft);font-size:12px;font-weight:600;padding:6px 0 8px}
+.sidebar-view-button.active{color:var(--ink);border-bottom-color:var(--rise)}
+.map-sidebar .movers-section{border-top:0;margin:0;padding:0}
+.map-sidebar .movers-section h2{font-size:20px}
+.map-sidebar .mover-list{grid-template-columns:minmax(0,1fr);column-gap:0}
+.map-sidebar .mover-item{padding:11px 3px}
+.map-sidebar .mover-school{white-space:normal}

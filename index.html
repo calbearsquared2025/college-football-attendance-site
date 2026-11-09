@@ -85,7 +85,12 @@
     <span class="visually-hidden" id="medianLabel"></span>
   </section>
 
-  <section class="school-card" aria-label="Selected school details" hidden>
+  <div class="sidebar-view-switch" id="sidebarViewSwitch" role="group" aria-label="Sidebar view" hidden>
+    <button type="button" class="sidebar-view-button active" data-sidebar-view="school" aria-controls="selectedSchoolCard" aria-pressed="true">School</button>
+    <button type="button" class="sidebar-view-button" data-sidebar-view="key-stats" aria-controls="moversSection" aria-pressed="false">Key Stats</button>
+  </div>
+
+  <section class="school-card" id="selectedSchoolCard" aria-label="Selected school details" hidden>
     <div class="school-summary-heading"><h2 id="selectedName"></h2><button type="button" class="conference-link" id="selectedConference" title="Highlight this conference on the map"></button></div>
     <div class="school-stat"><span id="selectedNowLabel"></span><strong id="selectedNow">—</strong></div>
     <div class="school-stat"><span id="selectedBeforeLabel"></span><strong id="selectedBefore">—</strong></div>
@@ -104,10 +109,6 @@
     <span id="selectedStadium" class="visually-hidden"></span>
   </section>
 
-    </aside>
-  </section>
-
-  <!-- Keep comparative superlatives below the map to avoid a tall, asymmetric sidebar. -->
       <section class="movers-section" id="moversSection" aria-labelledby="moversTitle" hidden>
         <div class="movers-heading">
           <h2 id="moversTitle">Key Stats</h2>
@@ -128,35 +129,11 @@
           <button type="button" id="lowestAverage" class="mover-item"><span class="mover-label">Lowest attendance</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
         </div>
       </section>
-  
-  <details class="conference-comparison-section" aria-labelledby="conferenceComparisonTitle">
-    <summary class="conference-comparison-summary">
-      <span class="conference-comparison-heading" id="conferenceComparisonTitle">Conference Comparison</span>
-      <span class="conference-comparison-subtitle" id="conferenceComparisonSubtitle"></span>
-      <span class="conference-comparison-action" aria-hidden="true"><span class="conference-show-label">Show table</span><span class="conference-hide-label">Hide table</span></span>
-    </summary>
-    <div class="conference-comparison-header">
-      <label class="field conference-comparison-membership"><span>CONFERENCE MEMBERSHIP</span>
-        <select id="conferenceTableMembership" aria-label="Conference comparison membership basis">
-          <option value="historical">Actual members each season</option>
-          <option value="fixed">2026 school cohorts</option>
-        </select>
-      </label>
-    </div>
-    <div class="conference-comparison-scroll" role="region" tabindex="0" aria-label="Conference attendance comparison, scroll horizontally to view all columns">
-      <table class="conference-comparison-table" aria-label="Average reported home attendance by conference for selected seasons">
-        <thead><tr>
-          <th scope="col">Conference</th>
-          <th scope="col" id="conferenceTableFromHeading">FROM</th>
-          <th scope="col" id="conferenceTableToHeading">TO</th>
-          <th scope="col" id="conferenceTableChangeHeading">Change / game</th>
-          <th scope="col" id="conferenceTablePctHeading">% change</th>
-        </tr></thead>
-        <tbody id="conferenceTableRows"></tbody>
-      </table>
-    </div>
-    <p class="conference-comparison-note" id="conferenceComparisonNote"></p>
-  </details>
+    </aside>
+  </section>
+
+
+
 
   <section class="trends-section" aria-labelledby="trendTitle" hidden>
     <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages</span></div>
@@ -215,6 +192,36 @@
       <th scope="col">Week / date</th><th scope="col">Opponent</th><th scope="col">Attendance</th>
     </tr></thead><tbody id="gameDetailRows"></tbody></table></div>
   </section>
+
+
+  <details class="conference-comparison-section" aria-labelledby="conferenceComparisonTitle" open>
+    <summary class="conference-comparison-summary">
+      <span class="conference-comparison-heading" id="conferenceComparisonTitle">Conference Comparison</span>
+      <span class="conference-comparison-subtitle" id="conferenceComparisonSubtitle"></span>
+      <span class="conference-comparison-action" aria-hidden="true"><span class="conference-show-label">Show table</span><span class="conference-hide-label">Hide table</span></span>
+    </summary>
+    <div class="conference-comparison-header">
+      <label class="field conference-comparison-membership"><span>CONFERENCE MEMBERSHIP</span>
+        <select id="conferenceTableMembership" aria-label="Conference comparison membership basis">
+          <option value="historical">Actual members each season</option>
+          <option value="fixed">2026 school cohorts</option>
+        </select>
+      </label>
+    </div>
+    <div class="conference-comparison-scroll" role="region" tabindex="0" aria-label="Conference attendance comparison, scroll horizontally to view all columns">
+      <table class="conference-comparison-table" aria-label="Average reported home attendance by conference for selected seasons">
+        <thead><tr>
+          <th scope="col">Conference</th>
+          <th scope="col" id="conferenceTableFromHeading">FROM</th>
+          <th scope="col" id="conferenceTableToHeading">TO</th>
+          <th scope="col" id="conferenceTableChangeHeading">Change / game</th>
+          <th scope="col" id="conferenceTablePctHeading">% change</th>
+        </tr></thead>
+        <tbody id="conferenceTableRows"></tbody>
+      </table>
+    </div>
+    <p class="conference-comparison-note" id="conferenceComparisonNote"></p>
+  </details>
 
 </main>
 <footer class="site-footer">

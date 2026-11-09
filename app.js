@@ -16,7 +16,7 @@ const PUBLIC_BUILD = window.__PUBLIC_ATTENDANCE_BUILD__ === true;
 
 const state = { baseline: 2019, target: 2025, metric: "pct", conference: "All", mapFocus: "all", schoolId: null,
   schoolBId: null, selectedConference: "ACC",
-  groupIds: [], moverType:"school", keyStatsMembership:"fixed",
+  groupIds: [], moverType:"school", keyStatsMembership:"fixed", sidebarView:"school",
   benchmarks:[{key:"historical",type:"historical"}] };
 const $ = id => document.getElementById(id);
 const themeColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -334,6 +334,7 @@ function setupControls() {
   });
   $("schoolFilter").addEventListener("change",()=>{
     state.schoolId=$("schoolFilter").value?Number($("schoolFilter").value):null;
+    state.sidebarView="school";
     state.mapFocus=state.schoolId===null?"all":"school";
     if(state.schoolBId===state.schoolId){state.schoolBId=null;$("schoolBFilter").value="";}
     render();
@@ -369,12 +370,18 @@ function setupControls() {
   });
   renderGroupChips();
   syncBenchmarkDraftControls();
-  $("keyStatsMembership").addEventListener("change",()=>{state.keyStatsMembership=$("keyStatsMembership").value;renderMovers();});
+  for(const button of document.querySelectorAll(".sidebar-view-button")){
+    button.addEventListener("click",()=>{
+      state.sidebarView=button.dataset.sidebarView;
+      syncSidebarPanels();
+    });
+  }
+  $("keyStatsMembership").addEventListener("change",()=>{state.keyStatsMembership=$("keyStatsMembership").value;renderMovers();syncSidebarPanels();});
   $("conferenceTableMembership").addEventListener("change",renderConferenceComparison);
   for (const button of document.querySelectorAll(".mover-type-button")) {
     button.addEventListener("click", () => {
       state.moverType=button.dataset.moverType;
-      renderMovers();
+      renderMovers();syncSidebarPanels();
     });
   }
   for (const button of document.querySelectorAll(".metric-button")) {
@@ -656,6 +663,7 @@ function selectSchool(schoolId) {
   closeSchoolChooser();
   state.mapFocus="school";
   state.schoolId = schoolId;
+  state.sidebarView="school";
   if (state.schoolBId === schoolId) {state.schoolBId = null; $("schoolBFilter").value = "";}
   $("schoolFilter").value = schoolId;
   render();
@@ -871,6 +879,10 @@ function renderSchoolCard() {
 function renderMovers() {
   const section=$("moversSection");
   const level=state.metric==="attendance";
+  const scopeConferences=new Set(currentPoints.map(s=>s.conference_2026).filter(Boolean));
+  const canRankConferences=scopeConferences.size>1;
+  document.querySelector(".mover-type-switch").hidden=!canRankConferences;
+  if(!canRankConferences)state.moverType="school";
   const conferences=state.moverType==="conference";
   $("moversTitle").textContent="Key Stats · "+(level
     ? `${state.target}${state.target===2026?" YTD":""}`
@@ -1805,6 +1817,21 @@ window.addEventListener("attendance-theme-change", () => {
   if (viewport && cohort.length && schoolIndex.size) render();
 });
 
+function syncSidebarPanels() {
+  const card=$("selectedSchoolCard");
+  const hasSchool=state.schoolId!==null && cohort.some(s=>Number(s.school_id)===state.schoolId);
+  const switcher=$("sidebarViewSwitch");
+  switcher.hidden=!hasSchool;
+  const activeView=hasSchool?state.sidebarView:"key-stats";
+  card.hidden=activeView!=="school";
+  $("moversSection").hidden=activeView!=="key-stats";
+  for(const button of document.querySelectorAll(".sidebar-view-button")){
+    const active=button.dataset.sidebarView===activeView;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-pressed",String(active));
+  }
+}
+
 function render() {
   if(state.schoolId===null){hiddenWeeklySeries.clear();weeklySeriesSchoolId=null;}
   syncMapFocusControls();
@@ -1812,7 +1839,7 @@ function render() {
   const ids=activeFocusIds();
   currentPoints=ids && state.mapFocus!=="school"
     ? mapPoints.filter(p=>ids.has(p.school_id)) : mapPoints;
-  renderMap();renderSchoolCard();renderStats();renderConferenceComparison();renderQuickTrend();renderTrendChart();
+  renderMap();renderSchoolCard();renderStats();syncSidebarPanels();renderConferenceComparison();renderQuickTrend();renderTrendChart();
   void renderCfbdGameDetails();
 }
 
