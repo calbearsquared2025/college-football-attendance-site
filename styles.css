@@ -55,6 +55,7 @@ main{max-width:1320px;margin:0 auto;padding:0 30px 60px}
 .map-tooltip b{display:block;font-size:13px}
 .map-tooltip span{display:block;font-size:15px;font-weight:700;margin:3px 0}
 .map-tooltip small{display:block;font-size:11px;color:var(--soft);line-height:1.4}
+.map-tooltip-averages{white-space:pre-line}
 .map-school-chooser{position:absolute;z-index:6;width:235px;max-width:calc(100% - 12px);max-height:265px;overflow-y:auto;background:#fff;border:1px solid #d5dcd9;box-shadow:0 7px 22px #152f2a28;border-radius:4px;padding:5px;pointer-events:auto}
 .map-school-chooser[hidden]{display:none}
 .map-chooser-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 6px;color:#34474b;font-size:12px}

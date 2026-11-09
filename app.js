@@ -338,16 +338,7 @@ function setupControls() {
     if(state.schoolBId===state.schoolId){state.schoolBId=null;$("schoolBFilter").value="";}
     render();
   });
-  $("clearMapSelection").addEventListener("click",()=>{
-    // Clear persistent selection and any touch-sticky map overlay.
-    hideTooltip();
-    closeSchoolChooser();
-    state.mapFocus="all";
-    state.schoolId=null;
-    state.schoolBId=null;
-    $("schoolBFilter").value="";
-    render();
-  });
+  $("clearMapSelection").addEventListener("click",clearMapSelection);
   $("mapAddGroupSchool").addEventListener("click",()=>{
     const id=Number($("mapGroupSchoolFilter").value);
     if(id&&!state.groupIds.includes(id))state.groupIds.push(id);
@@ -464,6 +455,11 @@ function initializeMap(geo) {
     });
   svg.call(zoom);
   svg.on("dblclick.zoom",null);
+  svg.on("click.clearSelection",event=>{
+    // D3 suppresses the click after a drag; marker clicks select a school.
+    if(event.defaultPrevented || event.target.closest(".map-marker")) return;
+    if(state.mapFocus!=="all" || state.schoolId!==null) clearMapSelection();
+  });
   document.addEventListener("keydown",event=>{
     if(event.key==="Escape") closeSchoolChooser();
   });
@@ -551,6 +547,7 @@ function showSchoolChooser(event,candidates) {
 }
 
 function activateMapMarker(event,fallback) {
+  event.stopPropagation();
   const candidates=mapPointerCandidates(event,fallback);
   const nearest=candidates[0];
   const ambiguous=candidates.filter(candidate=>candidate.distance<=5.5/mapMarkerScale() &&
@@ -588,20 +585,17 @@ function showTooltip(event, point) {
       `${state.baseline} → ${state.target}`;
   const value=document.createElement("span");value.textContent=metric;
   const averages=document.createElement("small");
+  averages.className="map-tooltip-averages";
   const smallDelta=point.comparison?.difference!==0 && Number.isFinite(point.comparison?.difference) &&
     Math.abs(point.comparison.difference)<1.5;
   const averageLabel=v=>smallDelta&&Number.isFinite(v)?
     v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):attendanceFormat(v);
   averages.textContent=level ? "" :
     state.target===2026 ?
-      `2025 full season: ${averageLabel(point.baseline?.average_reported_attendance)} → 2026 YTD: ${averageLabel(row?.average_reported_attendance)} per game` :
-      `${state.baseline}: ${averageLabel(point.baseline?.average_reported_attendance)} → ${state.target}: ${averageLabel(row?.average_reported_attendance)} per game`;
+      `2025: ${averageLabel(point.baseline?.average_reported_attendance)} per game\n2026 YTD: ${averageLabel(row?.average_reported_attendance)} per game` :
+      `${state.baseline}: ${averageLabel(point.baseline?.average_reported_attendance)} per game\n${state.target}: ${averageLabel(row?.average_reported_attendance)} per game`;
   averages.hidden=level;
-  const details=document.createElement("small");
-  details.textContent=`${state.target} source: ${sourceLabel(row?.attendance_source)} · ${row?.reported_home_games ?? 0} reported / ${row?.completed_home_games ?? 0} games`+
-    (row?.missing_home_games?` · ${row.missing_home_games} missing`:"")+
-    (row?.data_through?` · updated ${row.data_through.slice(0,10)}`:"");
-  tip.append(name,years,value,averages,details);
+  tip.append(name,years,value,averages);
   if (!level && mapNeutral(point)) {
     const note=document.createElement("small");
     note.className="map-tooltip-neutral";
@@ -617,11 +611,28 @@ function showTooltip(event, point) {
   }
   tip.hidden=false;
   const rect=document.querySelector(".map-stage").getBoundingClientRect();
-  const x=event.clientX?event.clientX-rect.left+12:18;
-  const y=event.clientY?event.clientY-rect.top+12:18;
-  const width=Math.min(235,rect.width-12),height=tip.offsetHeight||145;
-  tip.style.left=`${Math.max(6,Math.min(x,rect.width-width-6))}px`;
-  tip.style.top=`${Math.max(6,Math.min(y,rect.height-height-6))}px`;
+  // Anchor to the actual marker, including keyboard focus. Favor its empty
+  // side and otherwise place the tooltip above/below it, not over the arrow.
+  const marker=viewport.select(".map-points").selectAll("g.map-marker")
+    .filter(d=>d.school_id===point.school_id).node();
+  const bounds=marker?.getBoundingClientRect();
+  const x=bounds?(bounds.left+bounds.right)/2-rect.left :
+    Number.isFinite(event.clientX)?event.clientX-rect.left:rect.width/2;
+  const y=bounds?(bounds.top+bounds.bottom)/2-rect.top :
+    Number.isFinite(event.clientY)?event.clientY-rect.top:rect.height/2;
+  const width=tip.offsetWidth,height=tip.offsetHeight,gap=10,padding=6;
+  const clamp=(v,max)=>Math.max(padding,Math.min(v,max-padding));
+  let left,top;
+  if(rect.width-x-gap>=width+padding) {
+    left=x+gap;top=clamp(y-height/2,rect.height-height);
+  } else if(x-gap>=width+padding) {
+    left=x-width-gap;top=clamp(y-height/2,rect.height-height);
+  } else {
+    left=clamp(x-width/2,rect.width-width);
+    top=clamp(y<rect.height/2?y+gap:y-height-gap,rect.height-height);
+  }
+  tip.style.left=`${left}px`;
+  tip.style.top=`${top}px`;
 }
 
 function hideTooltip() {
@@ -629,6 +640,16 @@ function hideTooltip() {
   $("mapTooltip").hidden = true;
   viewport?.select(".map-points").selectAll("g.map-marker")
     .classed("hovered",false);
+}
+
+function clearMapSelection() {
+  hideTooltip();
+  closeSchoolChooser();
+  state.mapFocus="all";
+  state.schoolId=null;
+  state.schoolBId=null;
+  $("schoolBFilter").value="";
+  render();
 }
 
 function selectSchool(schoolId) {
