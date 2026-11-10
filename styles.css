@@ -523,11 +523,10 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
 .conference-comparison-header{margin-bottom:6px}
 .conference-comparison-membership select{height:34px}
 @media(min-width:1020px){
- .conference-comparison-section[open]{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start}
- .conference-comparison-section[open] .conference-comparison-summary{grid-column:1;grid-row:1;margin-bottom:5px;align-self:center}
- .conference-comparison-section[open] .conference-comparison-header{grid-column:2;grid-row:1;align-self:center;margin:0 0 5px}
+ .conference-comparison-section[open]{display:block;position:relative}
+ .conference-comparison-section[open] .conference-comparison-summary{margin-bottom:12px}
+ .conference-comparison-section[open] .conference-comparison-header{position:absolute;top:18px;right:91px;z-index:2;margin:0}
  .conference-comparison-section[open] .conference-comparison-membership{display:flex;flex-direction:row;align-items:center;gap:8px;min-width:0}
  .conference-comparison-section[open] .conference-comparison-membership>span{white-space:nowrap}
  .conference-comparison-section[open] .conference-comparison-membership select{width:215px}
- .conference-comparison-section[open] .conference-comparison-scroll,.conference-comparison-section[open] .conference-comparison-note{grid-column:1/-1}
 }
