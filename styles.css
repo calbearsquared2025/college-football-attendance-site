@@ -553,3 +553,21 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
  .map-sidebar .stat-overall-value{gap:6px}
  .map-sidebar .stat-overall-value small{font-size:10px}
 }
+
+/* Compact historical comparison controls without narrowing the full-width chart. */
+.trends-section .trend-meta-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;margin:8px 0 5px;min-height:25px}
+.trends-section .trend-meta-row .benchmark-chips,
+.trends-section .trend-meta-row .trend-membership-note,
+.trends-section .trend-meta-row .chart-key{margin:0}
+.trends-section .trend-meta-row .trend-membership-note{line-height:1.3}
+@media(min-width:1021px){
+ .trends-section .trend-controls{gap:10px 14px}
+ .trends-section .school-compare-control{flex:0 1 310px;max-width:310px}
+ .trends-section .trend-controls>.field{flex:0 1 330px;max-width:330px}
+ .trends-section .additional-benchmark-row{flex:0 1 auto;width:auto;padding-top:22px;gap:9px;align-self:start}
+ .trends-section .additional-benchmark-row .field{flex:0 1 240px;max-width:240px}
+}
+@media(max-width:620px){
+ .trends-section .trend-meta-row{gap:7px 10px}
+ .trends-section .trend-meta-row .chart-key{gap:11px}
+}

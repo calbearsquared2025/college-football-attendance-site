@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20261110d">
+  <link rel="stylesheet" href="./styles.css?v=20261110layout">
   <script src="./theme.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -161,9 +161,11 @@
       <button type="button" id="addGroupSchool" class="text-button">Add school</button>
       <div id="groupChips" class="group-chips" aria-live="polite"></div>
     </div>
-    <div id="benchmarkChips" class="benchmark-chips" aria-label="Active conference benchmarks" aria-live="polite"></div>
-    <p class="trend-membership-note" id="trendMembershipNote" role="status"></p>
-    <div class="chart-key" id="trendSeriesKey" aria-label="Chart series legend"></div>
+    <div class="trend-meta-row">
+      <div id="benchmarkChips" class="benchmark-chips" aria-label="Active conference benchmarks" aria-live="polite"></div>
+      <p class="trend-membership-note" id="trendMembershipNote" role="status"></p>
+      <div class="chart-key" id="trendSeriesKey" aria-label="Chart series legend"></div>
+    </div>
     <div class="chart-container">
       <svg id="trendChart" viewBox="0 0 1050 330" role="img" tabindex="0" aria-label="Historical attendance by school and conference; use arrow keys to inspect seasons"></svg>
       <div class="trend-tooltip" id="trendTooltip" role="status" aria-live="polite" hidden></div>
