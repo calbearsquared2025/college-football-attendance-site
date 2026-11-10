@@ -1101,8 +1101,8 @@ function renderAveragesSummary(levelMode,levelRows) {
   changeValue.textContent=hasComparison?
     (change>0?"+":change<0?"−":"")+attendanceFormat(Math.abs(change)):"—";
   note.textContent=Number.isFinite(changePct)?
-    (changePct>0?"+":"")+changePct.toFixed(1)+"%"+
-      (state.target===2026?" · provisional":""):"";
+    (changePct>0?"+":"")+changePct.toFixed(1)+"%":"";
+  note.title=state.target===2026?"Provisional 2026 year-to-date attendance comparison.":"";
   changeValue.style.color=themeColor(change===null?"--soft":change>=0?"--rise":"--fall");
   const hover="Weighted across "+rows.length+" comparable schools; each reported home game counts equally.";
   fromValue.title=hover+" "+fromGames+" games in "+beforeYear+".";

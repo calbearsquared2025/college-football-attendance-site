@@ -530,3 +530,26 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
  .conference-comparison-section[open] .conference-comparison-membership>span{white-space:nowrap}
  .conference-comparison-section[open] .conference-comparison-membership select{width:215px}
 }
+
+/* Keep change and percentage on one baseline and reuse map-side whitespace for selected school. */
+.map-sidebar .stat-overall-value{display:flex;align-items:baseline;gap:9px;white-space:nowrap;min-width:0}
+.map-sidebar .stat-overall-value small{font-size:11px;line-height:1;white-space:nowrap;flex:0 1 auto}
+.map-sidebar .stat-overall-value small:empty{display:none}
+.map-sidebar .sidebar-school-card{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 11px;margin:15px 0 0;padding:14px 2px 0;border-top:1px solid var(--rule);max-width:none}
+.map-sidebar .sidebar-school-card[hidden]{display:none}
+.map-sidebar .sidebar-school-card .school-summary-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 13px;grid-column:1/-1}
+.map-sidebar .sidebar-school-card .school-summary-heading h2{font-size:21px}
+.map-sidebar .sidebar-school-card .school-stat{min-width:0}
+.map-sidebar .sidebar-school-card .school-stat--change{grid-column:auto}
+.map-sidebar .sidebar-school-card .school-stat strong{font-size:20px;white-space:nowrap}
+.map-sidebar .sidebar-school-card .school-sources{display:flex;grid-column:1/-1;flex-direction:row;flex-wrap:wrap;gap:3px 12px}
+.map-sidebar .sidebar-school-card .school-source{font-size:10px}
+.map-sidebar .sidebar-school-card .quick-trend[hidden]{display:none}
+@media(max-width:620px){
+ .map-sidebar .sidebar-school-card{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .map-sidebar .sidebar-school-card .school-summary-heading{gap:3px 9px}
+ .map-sidebar .sidebar-school-card .school-stat strong{font-size:17px}
+ .map-sidebar .sidebar-school-card .school-sources{flex-direction:column}
+ .map-sidebar .stat-overall-value{gap:6px}
+ .map-sidebar .stat-overall-value small{font-size:10px}
+}
