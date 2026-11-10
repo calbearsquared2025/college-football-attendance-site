@@ -9,12 +9,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=2cc246960b55">
+  <link rel="stylesheet" href="./styles.css?v=3e8a38970cbc">
   <script src="./theme.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
   <script>window.__PUBLIC_ATTENDANCE_BUILD__ = true;</script>
-  <script type="module" src="./app.js?v=8babd444cd7e"></script>
+  <script type="module" src="./app.js?v=85e167a2fa06"></script>
 </head>
 <body>
 <a class="skip-link" href="#explore">Skip to explorer</a>
@@ -76,39 +76,7 @@
       </div>
       <p class="legend-explainer" id="markerScaleLegend" hidden></p>
     </div>
-    <aside class="map-sidebar" aria-label="Attendance statistics and school history">
-      <section class="stats-grid" aria-label="Comparison overview">
-    <div class="stat"><span id="comparableLabel">SCHOOLS COMPARED</span><strong id="comparableCount">—</strong></div>
-    <div class="stat"><span id="medianStatLabel">MEDIAN CHANGE</span><strong id="medianChange">—</strong></div>
-    <div class="stat"><span id="gainStatLabel">UP</span><strong id="gainCount">—</strong><small id="highSchoolName" hidden></small></div>
-    <div class="stat"><span id="lossStatLabel">DOWN</span><strong id="lossCount">—</strong><small id="lowSchoolName" hidden></small></div>
-    <span class="visually-hidden" id="medianLabel"></span>
-  </section>
-
-  <div class="sidebar-view-switch" id="sidebarViewSwitch" role="group" aria-label="Sidebar view" hidden>
-    <button type="button" class="sidebar-view-button active" data-sidebar-view="school" aria-controls="selectedSchoolCard" aria-pressed="true">School</button>
-    <button type="button" class="sidebar-view-button" data-sidebar-view="key-stats" aria-controls="moversSection" aria-pressed="false">Key Stats</button>
-  </div>
-
-  <section class="school-card" id="selectedSchoolCard" aria-label="Selected school details" hidden>
-    <div class="school-summary-heading"><h2 id="selectedName"></h2><button type="button" class="conference-link" id="selectedConference" title="Highlight this conference on the map"></button></div>
-    <div class="school-stat"><span id="selectedNowLabel"></span><strong id="selectedNow">—</strong></div>
-    <div class="school-stat"><span id="selectedBeforeLabel"></span><strong id="selectedBefore">—</strong></div>
-    <div class="school-stat school-stat--change"><span id="selectedDifferenceLabel">Change</span><strong id="selectedDifference">—</strong></div>
-    <div class="quick-trend" aria-labelledby="quickTrendTitle">
-      <div class="quick-trend-heading"><span id="quickTrendTitle">Attendance over time</span><a href="#trendTitle" id="quickTrendExpand" hidden>Detailed comparison</a></div>
-      <p id="quickTrendEmpty" hidden>Historical attendance unavailable for this school.</p>
-      <svg id="quickTrendChart" viewBox="0 0 390 145" role="img" aria-label="Selected school's historical attendance trend" hidden></svg><div id="quickTrendTooltip" class="quick-trend-tooltip" role="status" hidden></div>
-    </div>
-    <div class="school-sources">
-      <div class="school-source"><span id="selectedCoverage"></span> <a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
-      <div class="school-source" id="baselineSourceRow" hidden><span id="baselineCoverage"></span> <a id="baselineReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
-    </div>
-    <p id="disruptionNotice" class="disruption-notice" role="note" hidden></p>
-    <p id="annualSpecialNote" class="source-exception" hidden></p>
-    <span id="selectedStadium" class="visually-hidden"></span>
-  </section>
-
+    <aside class="map-sidebar" aria-label="Key attendance statistics">
       <section class="movers-section" id="moversSection" aria-labelledby="moversTitle" hidden>
         <div class="movers-heading">
           <h2 id="moversTitle">Key Stats</h2>
@@ -122,6 +90,18 @@
           </select></label>
         </div>
         <p id="moversSubtitle"></p>
+        <section class="stats-grid" aria-label="Attendance overview">
+    <div class="stat"><span id="baselineAverageLabel">2019 AVG / GAME</span><strong id="baselineAverage">—</strong></div>
+    <div class="stat"><span id="targetAverageLabel">2025 AVG / GAME</span><strong id="targetAverage">—</strong></div>
+    <div class="stat stat--overall"><span id="overallChangeLabel">OVERALL CHANGE / GAME</span><strong id="overallChange">—</strong><small id="overallChangePercent"></small></div>
+    <div class="stat"><span id="medianStatLabel">MEDIAN SCHOOL CHANGE</span><strong id="medianChange">—</strong></div>
+    <div class="stat"><span id="comparableLabel">SCHOOLS COMPARED</span><strong id="comparableCount">—</strong></div>
+    <div class="stat stat--directions">
+      <div class="direction-kpi"><span id="gainStatLabel">UP</span><strong id="gainCount">—</strong><small id="highSchoolName" hidden></small></div>
+      <div class="direction-kpi"><span id="lossStatLabel">DOWN</span><strong id="lossCount">—</strong><small id="lowSchoolName" hidden></small></div>
+    </div>
+    <span class="visually-hidden" id="medianLabel"></span>
+  </section>
         <div class="mover-list">
           <button type="button" id="largestRise" class="mover-item"><span class="mover-label">Biggest increase</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
           <button type="button" id="highestAverage" class="mover-item"><span class="mover-label">Highest attendance</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
@@ -137,6 +117,24 @@
 
   <section class="trends-section" aria-labelledby="trendTitle" hidden>
     <div class="section-heading"><h2 id="trendTitle">Historical home attendance</h2><span class="section-subtitle">Season averages</span></div>
+    <section class="school-card" id="selectedSchoolCard" aria-label="Selected school details" hidden>
+    <div class="school-summary-heading"><h2 id="selectedName"></h2><button type="button" class="conference-link" id="selectedConference" title="Highlight this conference on the map"></button></div>
+    <div class="school-stat"><span id="selectedBeforeLabel"></span><strong id="selectedBefore">—</strong></div>
+    <div class="school-stat"><span id="selectedNowLabel"></span><strong id="selectedNow">—</strong></div>
+    <div class="school-stat school-stat--change"><span id="selectedDifferenceLabel">Change</span><strong id="selectedDifference">—</strong></div>
+    <div class="quick-trend" aria-labelledby="quickTrendTitle" hidden>
+      <div class="quick-trend-heading"><span id="quickTrendTitle">Attendance over time</span><a href="#trendTitle" id="quickTrendExpand" hidden>Detailed comparison</a></div>
+      <p id="quickTrendEmpty" hidden>Historical attendance unavailable for this school.</p>
+      <svg id="quickTrendChart" viewBox="0 0 390 145" role="img" aria-label="Selected school's historical attendance trend" hidden></svg><div id="quickTrendTooltip" class="quick-trend-tooltip" role="status" hidden></div>
+    </div>
+    <div class="school-sources">
+      <div class="school-source"><span id="selectedCoverage"></span> <a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
+      <div class="school-source" id="baselineSourceRow" hidden><span id="baselineCoverage"></span> <a id="baselineReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
+    </div>
+    <p id="disruptionNotice" class="disruption-notice" role="note" hidden></p>
+    <p id="annualSpecialNote" class="source-exception" hidden></p>
+    <span id="selectedStadium" class="visually-hidden"></span>
+  </section>
     <div class="trend-controls">
       <div class="school-compare-control">
         <label class="field"><span>COMPARE SCHOOL</span><select id="schoolBFilter" aria-label="Compare another school"><option value="">No second school</option></select></label>

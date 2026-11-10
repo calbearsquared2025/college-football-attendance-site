@@ -480,3 +480,54 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
 .map-sidebar .mover-list{grid-template-columns:minmax(0,1fr);column-gap:0}
 .map-sidebar .mover-item{padding:11px 3px}
 .map-sidebar .mover-school{white-space:normal}
+
+/* Cohesive Key Stats: pooled per-game averages, summary, and notable schools. */
+.map-sidebar .movers-section{margin:0;padding:0;border:0}
+.map-sidebar .movers-heading{gap:7px 10px}
+.map-sidebar .movers-section h2{font-size:21px}
+.map-sidebar .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);border-block:1px solid var(--rule);margin:10px 0 12px;align-items:stretch}
+.map-sidebar .stats-grid .stat{border:0;background:var(--paper);padding:9px 7px;gap:4px;min-width:0}
+.map-sidebar .stats-grid .stat span{font-size:9px;white-space:normal;line-height:1.25}
+.map-sidebar .stats-grid .stat strong{font:600 22px/1.15 "Source Serif 4",Georgia,serif;white-space:nowrap;font-variant-numeric:tabular-nums}
+.map-sidebar .stats-grid .stat small{font-size:10px;line-height:1.2;white-space:normal;overflow:visible;max-width:none}
+.map-sidebar .stats-grid .stat--overall strong{color:var(--rise)}
+.map-sidebar .stats-grid .stat--directions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:start}
+.map-sidebar .direction-kpi{display:flex;flex-direction:column;gap:3px;min-width:0}
+.map-sidebar .direction-kpi+.direction-kpi{padding-left:7px;border-left:1px solid var(--rule)}
+.map-sidebar .direction-kpi span{font-size:9px;white-space:normal}
+.map-sidebar .direction-kpi strong{font-size:19px!important}
+.map-sidebar .direction-kpi small{font-size:9px!important}
+.map-sidebar .mover-list{grid-template-columns:minmax(0,1fr);column-gap:12px}
+.map-sidebar .mover-item{padding:9px 4px;row-gap:3px}
+.map-sidebar .mover-label{font-size:9px}
+.map-sidebar .mover-school,.map-sidebar .mover-value{font-size:13px}
+.map-sidebar .mover-value small{font-size:9px}
+@media(min-width:1300px){
+ .map-sidebar .mover-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .map-sidebar .mover-item{min-height:83px}
+}
+.trends-section .school-card{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:16px;row-gap:9px;max-width:none;padding:8px 0 13px;margin:0 0 14px;border-bottom:1px solid var(--rule)}
+.trends-section .school-summary-heading{grid-column:1/-1}
+.trends-section #selectedName{display:none}
+.trends-section .school-stat{min-width:0}
+.trends-section .school-stat--change{grid-column:auto}
+.trends-section .school-stat strong{font-size:23px}
+.trends-section .school-sources{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;gap:4px 18px}
+.trends-section .school-source{max-width:100%}
+.trends-section .quick-trend[hidden]{display:none!important}
+@media(max-width:620px){
+ .trends-section .school-card{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .trends-section .school-stat--change{grid-column:1/-1}
+ .trends-section .school-sources{flex-direction:column;gap:2px}
+}
+.conference-comparison-header{margin-bottom:6px}
+.conference-comparison-membership select{height:34px}
+@media(min-width:1020px){
+ .conference-comparison-section[open]{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start}
+ .conference-comparison-section[open] .conference-comparison-summary{grid-column:1;grid-row:1;margin-bottom:5px;align-self:center}
+ .conference-comparison-section[open] .conference-comparison-header{grid-column:2;grid-row:1;align-self:center;margin:0 0 5px}
+ .conference-comparison-section[open] .conference-comparison-membership{display:flex;flex-direction:row;align-items:center;gap:8px;min-width:0}
+ .conference-comparison-section[open] .conference-comparison-membership>span{white-space:nowrap}
+ .conference-comparison-section[open] .conference-comparison-membership select{width:215px}
+ .conference-comparison-section[open] .conference-comparison-scroll,.conference-comparison-section[open] .conference-comparison-note{grid-column:1/-1}
+}
