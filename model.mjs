@@ -202,8 +202,8 @@ export function coverageLabel(row) {
   if (!row || row.completed_home_games === 0) return "No FBS home-game data";
   if (row.reported_home_games === 0) return "Attendance unavailable";
   const total = `${row.reported_home_games} of ${row.completed_home_games} games reported`;
-  if (row.partial_season) return `${total} · season in progress`;
-  if (row.covid_exception) return `${total} · COVID-era season`;
+  if (row.partial_season) return `${total} (season in progress)`;
+  if (row.covid_exception) return `${total} (COVID-era season)`;
   return total;
 }
 
@@ -596,6 +596,9 @@ export function buildCFBDGapAnnualChartData(gapRows,membership) {
 
 // Display-only classification; raw data and comparisons are never rounded away.
 // An "essentially unchanged" glyph means less than 1% of baseline attendance.
+// Visual tuning: 0 = perfectly straight; 0.015 = barely curved; 0.025 = subtle; 0.05 = more pronounced.
+// This is the sideways bow at the shaft midpoint as a fraction of shaft length.
+export const MAP_ARROW_BEND = 0.025;
 export const MAP_NEUTRAL_PCT = 1;
 export const MAP_NEUTRAL_GLYPH_PATH = "M-5,0L5,0";
 export const MAP_NEUTRAL_TIP_PATH = "M0.5,-3.2L5,0L0.5,3.2";
@@ -608,7 +611,7 @@ export function isMapNeutral(value, metric = "pct", baselineAverage = null) {
   throw new Error("Near-flat threshold applies to change metrics only");
 }
 
-// Straight open-chevron arrows: tilt encodes direction and shaft length magnitude.
+// Very slightly bowed open-chevron arrows: overall tilt encodes direction, length encodes magnitude.
 // Small changes get a genuine small mark rather than the old 12px floor.
 export function arrowGeometry(value, metric = "pct", baselineAverage = null) {
   if (value === null || !Number.isFinite(value)) return null;
@@ -634,22 +637,32 @@ export function arrowGeometry(value, metric = "pct", baselineAverage = null) {
   const leftX = baseX - headHalfWidth * uy, leftY = baseY + headHalfWidth * ux;
   const rightX = baseX + headHalfWidth * uy, rightY = baseY - headHalfWidth * ux;
   const point = (x,y) => `${x.toFixed(2)},${y.toFixed(2)}`;
-  const path = `M${point(tailX,tailY)}L${point(tipX,tipY)}`;
+  // The single knob above controls a small perpendicular bow; endpoints and overall angle stay fixed.
+  // Reverse the bow with the direction so rises and falls mirror each other.
+  const bendPx = length * MAP_ARROW_BEND;
+  const bowX = -uy * bendPx * direction, bowY = ux * bendPx * direction;
+  const midX = (tailX + tipX) / 2 + bowX, midY = (tailY + tipY) / 2 + bowY;
+  const controlX = (tailX + tipX) / 2 + 2 * bowX;
+  const controlY = (tailY + tipY) / 2 + 2 * bowY;
+  const path = MAP_ARROW_BEND === 0
+    ? `M${point(tailX,tailY)}L${point(tipX,tipY)}`
+    : `M${point(tailX,tailY)}Q${point(controlX,controlY)} ${point(tipX,tipY)}`;
   // Keep the chevron open; a closed triangle at this size reads as a thick slash.
   const tipPath = `M${point(leftX,leftY)}L${point(tipX,tipY)}L${point(rightX,rightY)}`;
   return {path,tipPath,
-    hitSegments:[[tailX,tailY,tipX,tipY],[leftX,leftY,tipX,tipY],[tipX,tipY,rightX,rightY]],
-    length,angleDeg,strokeWidth,magnitude,direction};
+    hitSegments:[[tailX,tailY,midX,midY],[midX,midY,tipX,tipY],
+      [leftX,leftY,tipX,tipY],[tipX,tipY,rightX,rightY]],
+    length,angleDeg,strokeWidth,magnitude,direction,bendPx};
 }
 
 export function sourceLabel(source) {
-  if (source === "kenn_secondary" || source === "early_annual_with_kenn") return "Kenn · secondary";
+  if (source === "kenn_secondary" || source === "early_annual_with_kenn") return "Kenn (secondary)";
   if (source === "university_early_verified") return "University record";
   if (source === "ncaa_early_primary" || source === "ncaa_early_primary_subset" || source?.startsWith("ncaa_official")) return "NCAA";
-  if (source === "official_conference_2026_pilot") return "Conference · YTD";
-  if (source === "official_reports_2026_ytd") return "Official reports · YTD";
-  if (source === "official_school_2026") return "University · YTD";
-  if (source === "cfbd_2026_ytd") return "CFBD · YTD";
+  if (source === "official_conference_2026_pilot") return "Conference report";
+  if (source === "official_reports_2026_ytd") return "Official reports";
+  if (source === "official_school_2026") return "University report";
+  if (source === "cfbd_2026_ytd") return "CFBD";
   if (source?.startsWith("cfbd_derived")) return "CFBD-derived";
   return "Unavailable";
 }

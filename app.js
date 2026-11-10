@@ -5,7 +5,7 @@ import {
   arrowGeometry, isMapNeutral, MAP_NEUTRAL_PCT, sourceLabel, historicalConferenceSchoolSeries, aggregate2026Ytd, customGroupMembers, customGroupSeries,
   overlay2026OfficialGames, merge2026OfficialWeekly, conference2026Ytd,
   verifiedSelloutIndex, verifiedSelloutForGame, weeklyReportedGroupSeries, weeklyBenchmarkSchoolIds,
-} from "./model.mjs";
+} from "./model.mjs?v=20261110bend";
 import {teamPalette, conferenceColor, colorsTooSimilar} from "./palettes.mjs";
 import {normalizeDisruption, disruptionsInSeason, disruptionsStarting, disruptionsForComparison} from "./disruptions.mjs";
 import {suggestedComparisonsFor} from "./suggested-comparisons.mjs?v=d4db359838be";
