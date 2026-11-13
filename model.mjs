@@ -177,6 +177,16 @@ export function powerGroupMemberIds(membershipRows, cohort, category, baseline, 
   return [...new Set(members.map(row=>Number(row.school_id)).filter(id=>validIds.has(id)))].sort((a,b)=>a-b);
 }
 
+// A positive minimum requires an observed ending-season home average. Zero
+// preserves the existing unavailable markers and all unfiltered programs.
+export function meetsMinimumAttendance(point, minimum = 0) {
+  if (!(minimum > 0)) return true;
+  const target = point.target;
+  return target?.reported_home_games > 0 &&
+    Number.isFinite(target.average_reported_attendance) &&
+    target.average_reported_attendance >= minimum;
+}
+
 export function selectedPrograms(cohort, schoolIndex, locations, filters) {
   const points = [];
   for (const school of cohort) {
@@ -202,8 +212,8 @@ export function coverageLabel(row) {
   if (!row || row.completed_home_games === 0) return "No FBS home-game data";
   if (row.reported_home_games === 0) return "Attendance unavailable";
   const total = `${row.reported_home_games} of ${row.completed_home_games} games reported`;
-  if (row.partial_season) return `${total} (season in progress)`;
-  if (row.covid_exception) return `${total} (COVID-era season)`;
+  if (row.partial_season) return `${total} · season in progress`;
+  if (row.covid_exception) return `${total} · COVID-era season`;
   return total;
 }
 
@@ -656,13 +666,13 @@ export function arrowGeometry(value, metric = "pct", baselineAverage = null) {
 }
 
 export function sourceLabel(source) {
-  if (source === "kenn_secondary" || source === "early_annual_with_kenn") return "Kenn (secondary)";
+  if (source === "kenn_secondary" || source === "early_annual_with_kenn") return "Kenn · secondary";
   if (source === "university_early_verified") return "University record";
   if (source === "ncaa_early_primary" || source === "ncaa_early_primary_subset" || source?.startsWith("ncaa_official")) return "NCAA";
-  if (source === "official_conference_2026_pilot") return "Conference report";
-  if (source === "official_reports_2026_ytd") return "Official reports";
-  if (source === "official_school_2026") return "University report";
-  if (source === "cfbd_2026_ytd") return "CFBD";
+  if (source === "official_conference_2026_pilot") return "Conference · YTD";
+  if (source === "official_reports_2026_ytd") return "Official reports · YTD";
+  if (source === "official_school_2026") return "University · YTD";
+  if (source === "cfbd_2026_ytd") return "CFBD · YTD";
   if (source?.startsWith("cfbd_derived")) return "CFBD-derived";
   return "Unavailable";
 }

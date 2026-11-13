@@ -23,11 +23,10 @@ main{max-width:1320px;margin:0 auto;padding:0 30px 60px}
 .focus-field{min-width:190px;max-width:230px;flex:1.1}
 .conference-field{min-width:147px;max-width:205px;flex:1}
 .school-field{min-width:177px;max-width:250px;flex:1.4}
-.metric-switch{display:flex;align-items:center;border:1px solid var(--field-border);border-radius:5px;margin-left:auto;overflow:hidden;min-height:39px}
-.metric-button{background:transparent;border:0;color:var(--soft);font-size:12px;padding:9px 12px;white-space:nowrap}
-.metric-button+.metric-button{border-left:1px solid var(--rule)}
-.metric-button:hover{background:#eff1ef}
-.metric-button.active{background:#263e44;color:#fff}
+.metric-switch{display:flex;align-items:stretch;gap:3px;padding:3px;border:1px solid var(--field-border);border-radius:8px;margin-left:auto;min-height:44px}
+.metric-button{appearance:none;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:5px;color:var(--soft);font-size:12px;line-height:1.2;padding:7px 12px;white-space:nowrap;min-height:36px}
+.metric-button:hover:not(.active){background:var(--surface-hover)}
+.metric-button.active{background:#263e44;color:#fff;font-weight:600}
 .metric-button:disabled{cursor:not-allowed;opacity:.4}
 .context-note{font-size:12px;color:var(--soft);margin:8px 0 12px;min-height:18px}
 .map-layout{width:100%;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(320px,1fr);gap:27px;align-items:start}
@@ -118,7 +117,11 @@ main{max-width:1320px;margin:0 auto;padding:0 30px 60px}
 .trend-controls .field{min-width:165px;max-width:285px}
 .school-compare-control{display:flex;flex-direction:column;gap:5px;min-width:185px;max-width:305px;flex:0 1 285px}
 .school-compare-control .field{min-width:0;max-width:none;width:100%}
-.suggested-comparisons{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 5px;font-size:10px;line-height:1.35}
+.suggested-comparisons{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 5px;font-size:10px;line-height:1.35;flex:0 0 100%;width:100%}
+.selected-comparison-schools{display:flex;align-items:center;flex-wrap:wrap;gap:5px 7px;flex:0 0 100%;width:100%;font-size:11px;color:var(--soft)}
+.selected-comparison-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:14px;background:var(--surface);color:var(--ink);padding:3px 8px;font-size:11px}
+.selected-comparison-chip:hover{border-color:var(--rise)}
+.selected-comparison-chip .remove-mark{font-size:14px;line-height:1;color:var(--soft)}
 .suggested-comparisons-label{color:var(--soft);margin-right:2px}
 .suggested-school-chip{border:1px solid var(--rule);border-radius:12px;padding:2px 7px;background:var(--surface);color:var(--soft);font-size:10px;line-height:1.4}
 .suggested-school-chip:hover,.suggested-school-chip[aria-pressed="true"]{color:var(--rise);border-color:var(--rise)}
@@ -230,7 +233,7 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
  .conference-field{grid-column:1 / 3;max-width:none}
  .school-field{grid-column:3 / 4;max-width:none;min-width:0}
  .metric-switch{grid-column:1 / -1;width:100%}
- .metric-button{flex:1;padding:7px 4px;font-size:11px}
+ .metric-button{flex:1;min-width:0;padding:7px 4px;font-size:11px}
  .field{min-width:0}
  .field>span{font-size:9px}
  .map-topline h2{font-size:18px}
@@ -255,6 +258,8 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
  .trend-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
  .trend-controls .field{min-width:0;max-width:none}
  .school-compare-control{min-width:0;max-width:none;width:100%}
+ .selected-comparison-schools{grid-column:1/-1}
+ .suggested-comparisons{grid-column:1/-1}
  .additional-benchmark-row{grid-column:1/-1}
  .additional-benchmark-row .field{min-width:0;max-width:100%;flex:1 1 160px}
  .trend-controls .subtle-check{min-height:25px}
@@ -358,7 +363,7 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
 [data-theme="dark"] .field select:disabled{background:#202c35;color:#a5b2b9;opacity:.65}
 [data-theme="dark"] .metric-switch{border-color:var(--field-border)}
 [data-theme="dark"] .metric-button{color:var(--ink)}
-[data-theme="dark"] .metric-button:hover,[data-theme="dark"] .map-zoom button:hover{background:var(--surface-hover)}
+[data-theme="dark"] .metric-button:hover:not(.active),[data-theme="dark"] .map-zoom button:hover{background:var(--surface-hover)}
 [data-theme="dark"] .metric-button.active,[data-theme="dark"] .mover-type-button.active{background:#466e7e;color:#fff}
 [data-theme="dark"] .state-shape{fill:var(--map-land);stroke:var(--map-border)}
 [data-theme="dark"] .map-marker.active .marker-arrow,[data-theme="dark"] .map-marker.active .marker-tip{
@@ -588,3 +593,15 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
  .map-sidebar .mover-value{font-size:16px}
  .map-sidebar .mover-value small{font-size:9px}
 }
+
+/* Independent attendance threshold; keep the compact controls and theme tokens. */
+.attendance-minimum{grid-column:1/-1;flex:1 0 100%;display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--rule);min-width:0}
+.attendance-minimum label{font-size:11px;font-weight:600;color:var(--soft);white-space:nowrap}
+.attendance-minimum input[type="range"]{flex:1 1 140px;min-width:45px;max-width:none;accent-color:var(--rise);margin:0;height:32px;cursor:pointer}
+.attendance-minimum input[type="number"]{font:inherit;width:95px;min-width:0;height:36px;padding:5px 7px;color:var(--ink);background:var(--surface);border:1px solid var(--field-border);border-radius:5px}
+.attendance-minimum .text-button{white-space:nowrap;min-height:36px}
+.attendance-minimum .text-button:disabled{opacity:.45;cursor:default}
+@media(max-width:620px){.attendance-minimum{flex-wrap:wrap;gap:5px 10px}.attendance-minimum label{flex-basis:100%}.attendance-minimum input[type="range"]{max-width:none;height:44px}.attendance-minimum input[type="number"],.attendance-minimum .text-button{min-height:44px}}
+
+/* Threshold spans the existing controls grid, without reserved empty cells. */
+@media(max-width:620px){.attendance-minimum{display:grid;grid-template-columns:minmax(0,1fr) 95px auto;align-items:center}.attendance-minimum label{grid-column:1/-1}.attendance-minimum input[type="range"]{width:100%;min-width:0}.attendance-minimum input[type="number"]{width:100%}}

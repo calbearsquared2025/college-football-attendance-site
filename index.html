@@ -9,12 +9,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20261110grid">
+  <link rel="stylesheet" href="./styles.css?v=099dc00a0003">
   <script src="./theme.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
   <script>window.__PUBLIC_ATTENDANCE_BUILD__ = true;</script>
-  <script type="module" src="./app.js?v=20261110bend"></script>
+  <script type="module" src="./app.js?v=53cdce964337"></script>
 </head>
 <body>
 <a class="skip-link" href="#explore">Skip to explorer</a>
@@ -43,6 +43,13 @@
       <button type="button" class="metric-button active" data-metric="pct" aria-pressed="true">% change</button>
       <button type="button" class="metric-button" data-metric="absolute" aria-pressed="false">Change / game</button>
       <button type="button" class="metric-button" data-metric="attendance" aria-pressed="false">Attendance level</button>
+    </div>
+    <div class="attendance-minimum" role="group" aria-labelledby="minimumAttendanceLabel">
+      <label id="minimumAttendanceLabel" for="minimumAttendanceNumber">2025 minimum attendance / game</label>
+      <input id="minimumAttendanceRange" type="range" min="0" max="120000" step="1" value="0" aria-label="Minimum average home attendance per game">
+      <input id="minimumAttendanceNumber" type="number" min="0" max="120000" step="1" value="0" inputmode="numeric" aria-describedby="minimumAttendanceHelp">
+      <button type="button" class="text-button" id="resetMinimumAttendance" disabled>Reset</button>
+      <span class="visually-hidden" id="minimumAttendanceHelp">Ending-season reported home average. Zero shows all programs, including unavailable attendance.</span>
     </div>
   </section>
   <p id="mapFocusNote" class="context-note" role="status" hidden></p>
@@ -120,8 +127,8 @@
       <svg id="quickTrendChart" viewBox="0 0 390 145" role="img" aria-label="Selected school's historical attendance trend" hidden></svg><div id="quickTrendTooltip" class="quick-trend-tooltip" role="status" hidden></div>
     </div>
     <div class="school-sources">
-      <div class="school-source"><span id="selectedCoverage"></span> <a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
       <div class="school-source" id="baselineSourceRow" hidden><span id="baselineCoverage"></span> <a id="baselineReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
+      <div class="school-source"><span id="selectedCoverage"></span> <a id="annualReportSource" target="_blank" rel="noopener noreferrer" hidden>View source</a></div>
     </div>
     <p id="disruptionNotice" class="disruption-notice" role="note" hidden></p>
     <p id="annualSpecialNote" class="source-exception" hidden></p>
@@ -138,8 +145,7 @@
 
     <div class="trend-controls">
       <div class="school-compare-control">
-        <label class="field"><span>COMPARE SCHOOL</span><select id="schoolBFilter" aria-label="Compare another school"><option value="">No second school</option></select></label>
-        <div class="suggested-comparisons" id="suggestedComparisons" aria-label="Suggested school comparisons" hidden></div>
+        <label class="field"><span>ADD SCHOOL</span><select id="schoolBFilter" aria-label="Add a comparison school"><option value="">Choose a school…</option></select></label>
       </div>
       <label class="field"><span>PRIMARY BENCHMARK</span><select id="conferenceMode" aria-label="Primary benchmark; changes the chart immediately">
         <option value="historical">School's actual conference, year by year</option>
@@ -149,6 +155,8 @@
       </select></label>
       <label class="field" id="selectedConferenceField" hidden><span>CONFERENCE</span><select id="comparisonConference" aria-label="Historical conference to compare"></select></label>
       <label class="subtle-check" id="lineageControl" hidden><input type="checkbox" id="conferenceLineage"><span>Follow known predecessor names</span></label>
+      <div class="selected-comparison-schools" id="selectedComparisonSchools" aria-label="Selected comparison schools" aria-live="polite" hidden></div>
+      <div class="suggested-comparisons" id="suggestedComparisons" aria-label="Suggested school comparisons" hidden></div>
       <div class="additional-benchmark-row">
         <button type="button" id="addBenchmark" class="text-button">+ Add another benchmark</button>
         <label class="field" id="additionalBenchmarkField" hidden><span>ADDITIONAL BENCHMARK</span>
@@ -226,7 +234,7 @@
 
 </main>
 <footer class="site-footer">
-  <span>Created by Matthew Putzulu · © 2026 · Go Bears!</span>
+  <span>Created by Matthew Putzulu. © 2026. Go Bears!</span>
   <div class="site-footer-actions">
     <a href="./methodology.html">Sources &amp; methodology</a>
     <label class="theme-picker footer-theme"><span>Appearance</span><select id="themeMode" aria-label="Appearance" title="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>

@@ -1,11 +1,11 @@
 import {
   FIRST_YEAR, LAST_YEAR, normalizeSchool, normalizeConference, normalizeLocation,
-  schoolYearIndex, selectedPrograms, powerGroupMemberIds, compareSchool, compareProvisionalYtd, conferenceTrendSeries, conferenceLineageNames,
+  schoolYearIndex, selectedPrograms, meetsMinimumAttendance, powerGroupMemberIds, compareSchool, compareProvisionalYtd, conferenceTrendSeries, conferenceLineageNames,
   changeFormat, attendanceFormat, markerRadius, cfbdHomeGameDetails, buildNCAAAnnualChartData, buildCFBDGapAnnualChartData, buildEarlyAnnualChartData,
   arrowGeometry, isMapNeutral, MAP_NEUTRAL_PCT, sourceLabel, historicalConferenceSchoolSeries, aggregate2026Ytd, customGroupMembers, customGroupSeries,
   overlay2026OfficialGames, merge2026OfficialWeekly, conference2026Ytd,
   verifiedSelloutIndex, verifiedSelloutForGame, weeklyReportedGroupSeries, weeklyBenchmarkSchoolIds,
-} from "./model.mjs?v=20261110bend";
+} from "./model.mjs?v=20261112minimum";
 import {teamPalette, conferenceColor, colorsTooSimilar} from "./palettes.mjs";
 import {normalizeDisruption, disruptionsInSeason, disruptionsStarting, disruptionsForComparison} from "./disruptions.mjs";
 import {suggestedComparisonsFor} from "./suggested-comparisons.mjs?v=d4db359838be";
@@ -14,11 +14,23 @@ const d3 = window.d3;
 const topojson = window.topojson;
 const PUBLIC_BUILD = window.__PUBLIC_ATTENDANCE_BUILD__ === true;
 
-const state = { baseline: 2019, target: 2025, metric: "pct", conference: "All", mapFocus: "all", schoolId: null,
-  schoolBId: null, selectedConference: "ACC",
+const state = { baseline: 2019, target: 2025, metric: "pct", conference: "All", mapFocus: "all", schoolId: null, minimumAttendance: 0,
+  comparisonSchoolIds: [], selectedConference: "ACC",
   groupIds: [], moverType:"school", keyStatsMembership:"fixed",
   benchmarks:[{key:"historical",type:"historical"}] };
+const MAX_COMPARISON_SCHOOLS=3;
 const $ = id => document.getElementById(id);
+function dismissFloatingTooltips() {
+  for (const id of ["trendTooltip","quickTrendTooltip","mapTooltip"]) {
+    const tooltip=$(id);
+    if (tooltip) tooltip.hidden=true;
+  }
+  const hover=document.querySelector("#trendChart .trend-hover");
+  if (hover) hover.style.display="none";
+}
+// Touch scrolling on mobile does not reliably emit pointerleave on a chart.
+document.addEventListener("scroll",dismissFloatingTooltips,{capture:true,passive:true});
+document.addEventListener("touchmove",dismissFloatingTooltips,{passive:true});
 const themeColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function formattedChange(value,metric) {
   // Keep the underlying sign when a tiny nonzero percentage rounds to ±0.0%.
@@ -80,6 +92,7 @@ let hoveredPlotPoints = [];
 let currentHoverSchoolId = null;
 let currentPoints = [];
 let mapPoints = [];
+let mappedProgramCount = 0;
 const gameSeasonCache = new Map();
 let gameRequestId = 0;
 
@@ -211,7 +224,7 @@ function renderBenchmarkChips(school) {
       swatchGradient(membershipRows.filter(r=>Number(r.school_id)===state.schoolId)
         .map(r=>conferenceColor(r.historical_conference))) : benchmarkColor(benchmark,school);
     const label=document.createElement("span");
-    label.textContent=benchmarkName(benchmark,school)+(i===0?" · primary":" ×");
+    label.textContent=benchmarkName(benchmark,school)+(i===0?" (primary)":" ×");
     element.append(swatch,label);
     if(i!==0)element.addEventListener("click",()=>{
       state.benchmarks=state.benchmarks.filter(item=>item.key!==benchmark.key);
@@ -270,6 +283,25 @@ function syncMapFocusControls() {
   if(note)note.hidden=!note.textContent;
 }
 
+function syncMinimumAttendanceControls() {
+  const season=state.target===2026?"2026 YTD":String(state.target);
+  $("minimumAttendanceLabel").textContent=season+" minimum attendance / game";
+  $("minimumAttendanceRange").value=String(state.minimumAttendance);
+  $("minimumAttendanceRange").setAttribute("aria-valuetext",state.minimumAttendance
+    ? attendanceFormat(state.minimumAttendance)+" or more spectators per home game":"All programs");
+  $("minimumAttendanceNumber").value=String(state.minimumAttendance);
+  $("resetMinimumAttendance").disabled=state.minimumAttendance===0;
+}
+
+function setMinimumAttendance(value) {
+  const maximum=Number($("minimumAttendanceRange").max);
+  const next=Math.min(maximum,Math.max(0,Math.round(Number(value)||0)));
+  if(next===state.minimumAttendance){syncMinimumAttendanceControls();return;}
+  state.minimumAttendance=next;
+  hideTooltip();
+  render();
+}
+
 function setupControls() {
   availableYears = [...verifiedAnnualYears].filter(y => y !== 2020).sort((a,b) => a-b);
   for (const year of availableYears) {
@@ -286,10 +318,10 @@ function setupControls() {
   const historical = [...new Set(membershipRows.map(r => r.historical_conference).filter(Boolean))].sort();
   for (const name of historical) {
     $("comparisonConference").append(option(name,name));
-    $("additionalBenchmarkSelect").append(option("selected:"+name+":literal",name+" · actual members each year"));
+    $("additionalBenchmarkSelect").append(option("selected:"+name+":literal",name+" (actual members each year)"));
   }
   for(const [key,label] of [["historical","Selected school's actual conference by season"],
-    ["fixed","2026 conference cohort · tracked backward"],["custom","Custom group · tracked backward"]])
+    ["fixed","2026 conference cohort (tracked backward)"],["custom","Custom group (tracked backward)"]])
     $("additionalBenchmarkSelect").append(option(key,label));
   $("comparisonConference").value = historical.includes(state.selectedConference) ? state.selectedConference : historical[0];
   state.selectedConference = $("comparisonConference").value;
@@ -302,6 +334,12 @@ function setupControls() {
   $("schoolFilter").value = "";
   $("schoolBFilter").value = "";
   $("conferenceMode").value = state.benchmarks[0]?.type||"historical";
+  $("minimumAttendanceRange").addEventListener("input",event=>setMinimumAttendance(event.target.value));
+  $("minimumAttendanceNumber").addEventListener("change",event=>setMinimumAttendance(event.target.value));
+  $("minimumAttendanceNumber").addEventListener("keydown",event=>{
+    if(event.key==="Enter"){event.preventDefault();setMinimumAttendance(event.target.value);}
+  });
+  $("resetMinimumAttendance").addEventListener("click",()=>setMinimumAttendance(0));
   $("baselineYear").addEventListener("change", () => {
     state.baseline = Number($("baselineYear").value);
     if (state.baseline >= state.target) {
@@ -324,19 +362,20 @@ function setupControls() {
   });
   $("mapFocusMode").addEventListener("change",()=>{
     state.mapFocus=$("mapFocusMode").value;
-    if(state.mapFocus==="school")state.schoolId=null;
-    else {state.schoolId=null;state.schoolBId=null;$("schoolBFilter").value="";}
+    state.schoolId=null;state.comparisonSchoolIds=[];$("schoolBFilter").value="";
     render();
   });
   $("conferenceFilter").addEventListener("change",()=>{
     state.conference=$("conferenceFilter").value;
-    state.mapFocus="conference";render();
+    state.mapFocus="conference";state.comparisonSchoolIds=[];render();
   });
   $("schoolFilter").addEventListener("change",()=>{
     state.schoolId=$("schoolFilter").value?Number($("schoolFilter").value):null;
     state.mapFocus=state.schoolId===null?"all":"school";
-    if(state.schoolBId===state.schoolId){state.schoolBId=null;$("schoolBFilter").value="";}
+    state.comparisonSchoolIds=state.schoolId===null?[]:
+      state.comparisonSchoolIds.filter(id=>id!==state.schoolId);
     render();
+    showSelectedMapTooltip();
   });
   $("clearMapSelection").addEventListener("click",clearMapSelection);
   $("mapAddGroupSchool").addEventListener("click",()=>{
@@ -349,7 +388,7 @@ function setupControls() {
     const school=cohort.find(s=>Number(s.school_id)===state.schoolId);
     if(!school)return;
     state.conference=school.conference_2026;state.mapFocus="conference";
-    state.schoolId=null;render();
+    state.schoolId=null;state.comparisonSchoolIds=[];render();
   });
   $("schoolBFilter").addEventListener("change", () => {
     selectComparisonSchool($("schoolBFilter").value ? Number($("schoolBFilter").value) : null);
@@ -389,12 +428,18 @@ function setupControls() {
 }
 
 function selectComparisonSchool(next) {
-  if (next !== null && state.schoolId === null) {
-    state.schoolId = next; $("schoolFilter").value = next; state.schoolBId = null; $("schoolBFilter").value = "";
-    render(); return;
-  }
-  state.schoolBId = next === state.schoolId ? null : next;
-  if (state.schoolBId === null) $("schoolBFilter").value = "";
+  $("schoolBFilter").value="";
+  if(next===null)return;
+  if(state.schoolId===null){selectSchool(next);return;}
+  if(next===state.schoolId || state.comparisonSchoolIds.includes(next) ||
+    state.comparisonSchoolIds.length>=MAX_COMPARISON_SCHOOLS)return;
+  state.comparisonSchoolIds.push(next);
+  refreshSelectedSeriesCharts();
+}
+
+function removeComparisonSchool(id) {
+  state.comparisonSchoolIds=state.comparisonSchoolIds.filter(selected=>selected!==id);
+  hiddenWeeklySeries.delete("school:"+id);
   refreshSelectedSeriesCharts();
 }
 
@@ -407,22 +452,57 @@ function refreshSelectedSeriesCharts() {
 function renderSuggestedComparisons() {
   const container=$("suggestedComparisons");
   container.replaceChildren();
-  const suggestions=suggestedComparisonsFor(state.schoolId,cohort);
+  const suggestions=suggestedComparisonsFor(state.schoolId,cohort)
+    .filter(school=>!state.comparisonSchoolIds.includes(Number(school.school_id)));
   container.hidden=suggestions.length===0;
   if(!suggestions.length)return;
   const caption=document.createElement("span");
   caption.className="suggested-comparisons-label";
   caption.textContent="Suggested:";
   container.append(caption);
+  const full=state.comparisonSchoolIds.length>=MAX_COMPARISON_SCHOOLS;
   for(const school of suggestions){
     const button=document.createElement("button");
     button.type="button";
     button.className="suggested-school-chip";
     button.textContent=school.school_name;
     button.setAttribute("aria-label","Compare with "+school.school_name);
-    button.setAttribute("aria-pressed",String(Number(school.school_id)===state.schoolBId));
-    button.addEventListener("click",()=>selectComparisonSchool(Number(school.school_id)===state.schoolBId ? null : Number(school.school_id)));
+    button.disabled=full;
+    button.addEventListener("click",()=>selectComparisonSchool(Number(school.school_id)));
     container.append(button);
+  }
+}
+
+function renderSelectedComparisonSchools() {
+  const container=$("selectedComparisonSchools");
+  container.replaceChildren();
+  container.hidden=state.comparisonSchoolIds.length===0;
+  const picker=$("schoolBFilter");
+  picker.value="";
+  picker.disabled=state.comparisonSchoolIds.length>=MAX_COMPARISON_SCHOOLS;
+  const excluded=new Set([state.schoolId,...state.comparisonSchoolIds]);
+  for(const option of picker.options)if(option.value)option.disabled=excluded.has(Number(option.value));
+  if(container.hidden)return;
+  const label=document.createElement("span");
+  label.textContent="Comparing:";
+  container.append(label);
+  for(const id of state.comparisonSchoolIds){
+    const school=cohort.find(item=>Number(item.school_id)===id);
+    if(!school)continue;
+    const button=document.createElement("button");
+    button.type="button";button.className="selected-comparison-chip";
+    button.setAttribute("aria-label","Remove "+school.school_name+" from comparison");
+    const name=document.createElement("span");name.textContent=school.school_name;
+    const close=document.createElement("span");close.className="remove-mark";
+    close.textContent="×";close.setAttribute("aria-hidden","true");
+    button.append(name,close);
+    button.addEventListener("click",()=>removeComparisonSchool(id));
+    container.append(button);
+  }
+  if(picker.disabled){
+    const note=document.createElement("span");
+    note.textContent="3-school comparison limit";
+    container.append(note);
   }
 }
 
@@ -476,7 +556,7 @@ function attendanceContext(schoolId) {
     disruptionsForComparison(disruptionRows,schoolId,state.baseline,state.target);
 }
 function contextSummary(items) {
-  return items.map(d=>d.title).join(" · ");
+  return items.map(d=>d.title).join("; ");
 }
 
 // Rank the actual visible strokes, in screen-equivalent marker coordinates.
@@ -572,7 +652,7 @@ function focusMapMarker(point) {
 function showTooltip(event, point) {
   if (!$("mapSchoolChooser").hidden) return;
   point=mapPointerCandidates(event,point)[0].point;
-  focusMapMarker(point);
+  if(!event.selection)focusMapMarker(point);
   const tip=$("mapTooltip"), row=point.target;
   const level=state.metric==="attendance";
   const metric=level ? `${attendanceFormat(point.value)} spectators / game` :
@@ -647,7 +727,7 @@ function clearMapSelection() {
   closeSchoolChooser();
   state.mapFocus="all";
   state.schoolId=null;
-  state.schoolBId=null;
+  state.comparisonSchoolIds=[];
   $("schoolBFilter").value="";
   render();
 }
@@ -656,9 +736,15 @@ function selectSchool(schoolId) {
   closeSchoolChooser();
   state.mapFocus="school";
   state.schoolId = schoolId;
-  if (state.schoolBId === schoolId) {state.schoolBId = null; $("schoolBFilter").value = "";}
+  state.comparisonSchoolIds=state.comparisonSchoolIds.filter(id=>id!==schoolId);
   $("schoolFilter").value = schoolId;
   render();
+  showSelectedMapTooltip();
+}
+
+function showSelectedMapTooltip() {
+  const point=hoveredPlotPoints.find(p=>p.school_id===state.schoolId);
+  if(point)showTooltip({type:"focus",selection:true},point);
 }
 
 function renderMagnitudeKey() {
@@ -719,7 +805,7 @@ function renderMap() {
     .attr("aria-label",d => `${d.school_name}: ${d.value == null ? "unavailable" :
       state.metric === "attendance" ? attendanceFormat(d.value) + " reported average" :
         formattedChange(d.value,state.metric) + (mapNeutral(d) ? " (shown as essentially unchanged)" : "")}`+
-      (attendanceContext(d.school_id).length?" · documented attendance context":""))
+      (attendanceContext(d.school_id).length?"; documented attendance context":""))
     .on("mouseenter",showTooltip).on("mousemove",showTooltip).on("mouseleave",hideTooltip)
     .on("focus",showTooltip).on("blur",hideTooltip)
     .on("click",activateMapMarker)
@@ -753,16 +839,19 @@ function renderMap() {
     .attr("d",d=>state.metric==="attendance"?null:d.geometry?.path??null);
   selection.select(".marker-hit-tip")
     .attr("d",d=>state.metric==="attendance"?null:d.geometry?.tipPath??null);
-  selection.select("title").text(d => `${d.school_name} · ${d.value == null ? "no reported value" :
+  selection.select("title").text(d => `${d.school_name}: ${d.value == null ? "no reported value" :
     state.metric === "attendance" ? attendanceFormat(d.value) : formattedChange(d.value,state.metric)}`);
   const focusPoints = plotting.filter(inFocus);
-  $("mapStatus").textContent=focusIds===null
-    ? `${focusPoints.filter(p=>p.value!==null).length} of ${plotting.length} mapped schools with values`
-    : `${focusPoints.length} highlighted · ${plotting.length} mapped schools`;
+  $("mapStatus").textContent=state.minimumAttendance>0
+    ? `${plotting.length} of ${mappedProgramCount} mapped schools meet minimum`+
+      (focusIds===null?"":` · ${focusPoints.length} highlighted`)
+    : focusIds===null
+      ? `${focusPoints.filter(p=>p.value!==null).length} of ${plotting.length} mapped schools with values`
+      : `${focusPoints.length} of ${plotting.length} mapped schools highlighted`;
   $("mapTitle").textContent = state.metric === "attendance" ? "Average reported attendance" : "Change in home attendance";
   $("mapRange").textContent = state.metric === "attendance" ?
-    state.target === 2026 ? "2026 YTD · official reports" : `${state.target} season` :
-    state.target===2026 ? "2025 full season → 2026 YTD · provisional" :
+    state.target === 2026 ? "2026 YTD (official reports)" : `${state.target} season` :
+    state.target===2026 ? "2025 full season → 2026 YTD (provisional)" :
       `${state.baseline} → ${state.target}`;
   const riseLegend = $("riseLegendItem");
   riseLegend.lastElementChild.textContent = state.metric === "attendance" ? "Reported level" : "Increase";
@@ -808,19 +897,19 @@ function renderSchoolCard() {
   $("selectedDifference").style.color = themeColor(displayedChange===null||displayedChange===undefined?"--soft":displayedChange>=0?"--rise":"--fall");
   const candidate = candidateIndex.get(`${state.schoolId}:${state.target}`);
   const coverageText=(row,year)=>{
-    if(!row) return `${year} · No qualified annual attendance`;
-    const label=sourceLabel(row.attendance_source).replace(" · YTD","");
+    if(!row) return `${year}: No qualified annual attendance`;
+    const label=sourceLabel(row.attendance_source);
     const ncaa=row.attendance_source?.startsWith("ncaa_");
     const games=ncaa
       ? `${row.reported_home_games} credited home games`
       : `${row.reported_home_games} of ${row.completed_home_games} games reported`;
-    return `${year}${year===2026?" YTD":""} · ${label} · ${games}` +
-      (row.missing_home_games ? ` · ${row.missing_home_games} missing` : "") +
-      (row.data_through ? ` · updated ${row.data_through.slice(0,10)}` : "");
+    return `${year}${year===2026?" YTD":""}: ${label}, ${games}` +
+      (row.missing_home_games ? ` (${row.missing_home_games} missing)` : "") +
+      (row.data_through ? `, updated ${row.data_through.slice(0,10)}` : "");
   };
   $("selectedCoverage").textContent = after ? coverageText(after,state.target)
-    : candidate ? `${state.target} · CFBD ${candidate.verification_status.replaceAll("_"," ")} · not qualified for annual trends`
-    : `${state.target} · No qualified annual attendance`;
+    : candidate ? `${state.target}: CFBD ${candidate.verification_status.replaceAll("_"," ")}; not qualified for annual trends`
+    : `${state.target}: No qualified annual attendance`;
   const baselineYear=state.target===2026?2025:state.baseline;
   $("baselineSourceRow").hidden=level;
   $("baselineCoverage").textContent=coverageText(before,baselineYear);
@@ -841,7 +930,7 @@ function renderSchoolCard() {
     const link = document.createElement("a");
     link.href = "./methodology.html#adjustments";
     link.textContent = "Details in methodology";
-    special.append(exception+" · ",link);
+    special.append(exception+". ",link);
   }
   const link = $("annualReportSource");
   link.hidden = !after?.source_url && !(state.target===2026 && after?.reported_home_games>0);
@@ -860,8 +949,8 @@ function renderSchoolCard() {
   const context=attendanceContext(state.schoolId), notice=$("disruptionNotice");
   notice.replaceChildren();notice.hidden=!context.length;
   if(context.length) {
-    const lead=document.createElement("strong");lead.textContent="Attendance context · ";
-    notice.append(lead,document.createTextNode(contextSummary(context)+" · "));
+    const lead=document.createElement("strong");lead.textContent="Attendance context: ";
+    notice.append(lead,document.createTextNode(contextSummary(context)+". "));
     const detail=document.createElement("a");
     detail.href="./methodology.html#disruptions";detail.textContent="Why this is flagged";
     notice.append(detail);
@@ -872,11 +961,11 @@ function renderMovers() {
   const section=$("moversSection");
   const level=state.metric==="attendance";
   const scopeConferences=new Set(currentPoints.map(s=>s.conference_2026).filter(Boolean));
-  const canRankConferences=scopeConferences.size>1;
+  const canRankConferences=state.minimumAttendance===0 && scopeConferences.size>1;
   document.querySelector(".mover-type-switch").hidden=!canRankConferences;
   if(!canRankConferences)state.moverType="school";
   const conferences=state.moverType==="conference";
-  $("moversTitle").textContent="Key Stats · "+(level
+  $("moversTitle").textContent="Key Stats: "+(level
     ? `${state.target}${state.target===2026?" YTD":""}`
     : `${state.target===2026?2025:state.baseline} vs. ${state.target===2026?"2026 YTD":state.target}`);
   section.hidden=false;
@@ -935,7 +1024,7 @@ function renderMovers() {
       disruptionsForComparison(disruptionRows,row.school.school_id,state.baseline,state.target) : [];
     if(context.length){
       const mark=document.createElement("span");mark.className="mover-context-marker";
-      mark.textContent=" · context";mark.title=contextSummary(context);name.append(mark);
+      mark.textContent=" (context)";mark.title=contextSummary(context);name.append(mark);
     }
     const value=button.querySelector(".mover-value");
     value.replaceChildren();
@@ -949,7 +1038,7 @@ function renderMovers() {
       value.append(detail);
     }
     button.title=(conferences?"Highlight "+row.conference+" on the map":"Show "+row.name+" on the map")+
-      (context.length?" · Attendance context: "+contextSummary(context):"");
+      (context.length?"; Attendance context: "+contextSummary(context):"");
     button.onclick=conferences?()=>{
       state.conference=row.conference;state.mapFocus="conference";state.schoolId=null;render();
     }:()=>selectSchool(row.school.school_id);
@@ -960,10 +1049,14 @@ function renderMovers() {
       : "Fixed 2026 conference members"
     : state.mapFocus==="p5"?"Historical P5 cohort"
     : state.mapFocus==="p4"?"P4 cohort"
-    : state.mapFocus==="conference"?`${state.conference} · 2026 members`
+    : state.mapFocus==="conference"?`${state.conference} (2026 members)`
     : state.mapFocus==="custom"?"Custom group":"";
-  $("moversSubtitle").textContent=scope;
-  $("moversSubtitle").hidden=!scope;
+  const minimumScope=state.minimumAttendance>0
+    ? attendanceFormat(state.minimumAttendance)+"+ per game in "+(state.target===2026?"2026 YTD":state.target)
+    : "";
+  const description=[scope,minimumScope].filter(Boolean).join(" · ");
+  $("moversSubtitle").textContent=description;
+  $("moversSubtitle").hidden=!description;
 }
 
 // Independent conference overview using the same validated aggregates as Key Stats.
@@ -1036,8 +1129,8 @@ function renderConferenceComparison() {
     rows.append(tr);
   }
   $("conferenceComparisonSubtitle").textContent=level
-    ? label(toYear)+" · spectators/game"
-    : label(fromYear)+" → "+label(toYear)+" · spectators/game";
+    ? label(toYear)+" (spectators/game)"
+    : label(fromYear)+" → "+label(toYear)+" (spectators/game)";
   $("conferenceComparisonNote").textContent=
     (historical
       ? "Actual conference members each year (realignment included)."
@@ -1139,18 +1232,18 @@ function renderStats() {
     $("lossCount").textContent=attendanceFormat(ordered[0]?.target.average_reported_attendance);
     $("highSchoolName").textContent=ordered.at(-1)?.school_name ?? "";
     $("lowSchoolName").textContent=ordered[0]?.school_name ?? "";
-    $("medianLabel").textContent=`Reported average spectators per home game · ${state.target===2026?"2026 YTD provisional":state.target}`;
+    $("medianLabel").textContent=`Reported average spectators per home game (${state.target===2026?"2026 YTD, provisional":state.target})`;
   } else {
     $("comparableCount").textContent=comparable.length;
     $("gainCount").textContent=changes.filter(v=>v>0).length;
     $("lossCount").textContent=changes.filter(v=>v<0).length;
     $("medianChange").textContent=formattedChange(changes.length?d3.median(changes):null,state.metric);
-    $("medianLabel").textContent=`Comparable programs · ${state.baseline}–${state.target}${state.target===2026?" YTD provisional":""}`;
+    $("medianLabel").textContent=`Comparable programs (${state.baseline}–${state.target}${state.target===2026?" YTD, provisional":""})`;
   }
   $("comparisonNotice").hidden=state.target!==2026;
   const dataThrough=ytdDataThroughLabel();
   $("comparisonNotice").textContent=state.target===2026
-    ? `2026 YTD (provisional)${levelMode?"":" vs. full-year 2025"}${dataThrough?` · Data through ${dataThrough}`:""}.`
+    ? `2026 YTD (provisional)${levelMode?"":" vs. full-year 2025"}${dataThrough?`. Data through ${dataThrough}`:""}.`
     : "";
   for (const button of document.querySelectorAll(".metric-button")) {
     const isChange = button.dataset.metric !== "attendance";
@@ -1218,8 +1311,8 @@ function renderQuickTrend() {
     .attr("stroke",palette.primary).attr("stroke-width",1.3);
   const showTrendTip=(event,d)=>{
     const context=disruptionsInSeason(disruptionRows,state.schoolId,d.year);
-    tip.textContent=`${d.year}${d.year===2026?" YTD · provisional":""}: ${attendanceFormat(d.average)} / game`+
-      (context.length?" · "+contextSummary(context):"");
+    tip.textContent=`${d.year}${d.year===2026?" YTD (provisional)":""}: ${attendanceFormat(d.average)} / game`+
+      (context.length?"; "+contextSummary(context):"");
     tip.hidden=false;
     svg.selectAll(".quick-dot").attr("r",p=>p.year===d.year?4.4:p.year===2026?3.7:2.2);
   };
@@ -1301,15 +1394,32 @@ function renderTrendStats(series) {
   }
 }
 
+function comparisonSchoolVisuals() {
+  const chosen=[state.schoolId,...state.comparisonSchoolIds]
+    .map(id=>cohort.find(s=>Number(s.school_id)===id)).filter(Boolean);
+  const colors=[];
+  return chosen.map((school,i)=>{
+    const palette=teamPalette(Number(school.school_id));
+    const similar=colors.some(color=>colorsTooSimilar(color,palette.primary));
+    colors.push(palette.primary);
+    return {school,id:Number(school.school_id),palette,
+      dash:similar?["7 3","3 3","10 3 2 3"][(i-1)%3]:null};
+  });
+}
+
 function renderTrendChart() {
   const section=document.querySelector(".trends-section");
   const selected=cohort.find(s=>Number(s.school_id)===state.schoolId);
   if(!selected){section.hidden=true;return;}
   section.hidden=false;
-  const schoolB=cohort.find(s=>Number(s.school_id)===state.schoolBId);
-  $("schoolBFilter").value=schoolB?String(state.schoolBId):"";
+  const schoolVisuals=comparisonSchoolVisuals();
+  renderSelectedComparisonSchools();
   renderSuggestedComparisons();
-  $("trendTitle").textContent=selected.school_name+(schoolB?" vs. "+schoolB.school_name:"")+" · historical attendance";
+  const comparisons=schoolVisuals.slice(1);
+  $("trendTitle").textContent=selected.school_name+
+    (comparisons.length===1?" vs. "+comparisons[0].school.school_name:
+      comparisons.length>1?" + "+comparisons.length+" schools":"")+
+    ": Historical Attendance";
   const primary=state.benchmarks[0];
   const membershipDescription=primary?.type==="historical" ?
     "Conference colors follow historical membership." :
@@ -1323,18 +1433,13 @@ function renderTrendChart() {
   $("customGroupControls").hidden=$("conferenceMode").value!=="custom" &&
     !state.benchmarks.some(item=>item.type==="custom");
   renderBenchmarkChips(selected);
-  const selectedPalette=teamPalette(state.schoolId);
-  const secondPalette=schoolB?teamPalette(state.schoolBId):null;
-  const similarSchoolColors=secondPalette &&
-    colorsTooSimilar(selectedPalette.primary,secondPalette.primary);
   const series=[
-    {key:"school",name:selected.school_name,short:selected.school_name,
-      color:selectedPalette.primary,secondary:selectedPalette.secondary,
-      width:2.7,data:schoolTrendSeries(state.schoolId),schoolId:state.schoolId,benchmark:false},
-    ...(schoolB?[{key:"school-b",name:schoolB.school_name,short:schoolB.school_name,
-      color:secondPalette.primary,secondary:secondPalette.secondary,
-      dash:similarSchoolColors?"7 3":null,width:2.7,
-      data:schoolTrendSeries(state.schoolBId),schoolId:state.schoolBId,benchmark:false}]:[]),
+    ...schoolVisuals.map(({school,id,palette,dash},i)=>({
+      key:i===0?"school":"school:"+id,
+      name:school.school_name,short:school.school_name,
+      color:palette.primary,secondary:palette.secondary,dash,
+      width:i===0?2.7:2.5,data:schoolTrendSeries(id),schoolId:id,benchmark:false,
+    })),
     ...state.benchmarks.map(entry=>({
       key:entry.key,name:benchmarkName(entry,selected),
       short:entry.type==="historical"?"Historical":entry.type==="fixed"?"Current cohort":
@@ -1358,14 +1463,16 @@ function renderTrendChart() {
   const annotated=series.some(s=>!s.benchmark && s.data.some(d=>d.average!==null &&
     disruptionsStarting(disruptionRows,s.schoolId,d.year).length));
   const coverageNote=(withheld.size ?
-    [...withheld].sort().map(year=>year===2020?"2020 unavailable":year+" benchmark unavailable").join(" · ") : "")+
-    (annotated?(withheld.size?" · ":"")+"Amber rings mark documented attendance context.":"");
+    [...withheld].sort().map(year=>year===2020?"2020 unavailable":year+" benchmark unavailable").join("; ")+"." : "")+
+    (annotated?(withheld.size?" ":"")+"Amber rings mark documented attendance context.":"");
   $("trendCoverageNote").textContent=coverageNote;
   $("trendCoverageNote").hidden=!coverageNote;
   const svg=d3.select("#trendChart");svg.selectAll("*").remove();
   svg.attr("aria-label","Annual home attendance for "+series.map(s=>s.name).join(", ")+
     ", 2001–2026. Use left and right arrows to inspect years.");
-  const w=1050,h=330,margin={top:35,right:112,bottom:33,left:66};
+  const w=1050,h=330+Math.max(0,series.length-3)*28,
+    margin={top:35,right:112,bottom:33,left:66};
+  svg.attr("viewBox","0 0 "+w+" "+h);
   const x=d3.scaleLinear().domain([FIRST_YEAR,LAST_YEAR]).range([margin.left,w-margin.right]);
   const observed=series.flatMap(s=>s.data).filter(d=>d.average!==null);
   const ymax=d3.max(observed,d=>d.average)||80000;
@@ -1475,7 +1582,8 @@ function renderTrendChart() {
   }
   plot.append("text").attr("x",margin.left).attr("y",27).attr("fill",themeColor("--soft"))
     .attr("font-size",10).text("REPORTED SPECTATORS / HOME GAME");
-  const hover=plot.append("g").attr("pointer-events","none").style("display","none");
+  const hover=plot.append("g").attr("class","trend-hover")
+    .attr("pointer-events","none").style("display","none");
   const rule=hover.append("line").attr("class","chart-hover-rule")
     .attr("y1",margin.top).attr("y2",h-margin.bottom);
   const dots=hover.append("g");
@@ -1492,7 +1600,7 @@ function renderTrendChart() {
       .attr("fill",d=>seriesPointColor(d.item,d.d));
     const tooltip=$("trendTooltip");tooltip.replaceChildren();
     const head=document.createElement("strong");
-    head.textContent=hoverYear+(hoverYear===2026?" · provisional YTD":"");
+    head.textContent=hoverYear+(hoverYear===2026?" (provisional YTD)":"");
     tooltip.append(head);
     for(const item of series){
       const d=item.data.find(row=>row.year===hoverYear);
@@ -1510,7 +1618,7 @@ function renderTrendChart() {
         const events=disruptionsInSeason(disruptionRows,item.schoolId,hoverYear);
         if(events.length){
           const flag=document.createElement("small");flag.className="disruption-tooltip-note";
-          flag.textContent=item.name+" · "+contextSummary(events);
+          flag.textContent=item.name+": "+contextSummary(events);
           tooltip.append(flag);
         }
       }
@@ -1522,15 +1630,15 @@ function renderTrendChart() {
         return item.short+": "+(d?.verified||0)+"/"+(d?.eligible||0)+
           " schools, "+(d?.reported||0)+"/"+(d?.completed||0)+" games";
       });
-      note.textContent="Provisional YTD · "+(ytdThrough?.slice(0,10)||"date unavailable")+
-        (coverage.length?" · "+coverage.join(" · "):"");
+      note.textContent="Provisional YTD, data through "+(ytdThrough?.slice(0,10)||"date unavailable")+
+        (coverage.length?"; "+coverage.join("; "):"");
     } else {
       const sources=series.map(item=>{
         const d=item.data.find(point=>point.year===hoverYear);
         const source=d?.source||d?.attendanceSource;
         return d?.average!=null&&source?item.short+": "+sourceLabel(source):null;
       }).filter(Boolean);
-      note.textContent=sources.length?"Sources · "+sources.join(" · "):
+      note.textContent=sources.length?"Sources: "+sources.join("; "):
         "No source-qualified attendance reported for this season.";
     }
     tooltip.append(note);tooltip.hidden=false;
@@ -1553,10 +1661,9 @@ function renderTrendChart() {
     const left=Math.max(8,chartViewport.clientWidth-tooltip.offsetWidth-8);
     tooltip.style.left=(chartViewport.scrollLeft+left)+"px";
   }
-  chartViewport.onscroll=()=>{
-    if(!$("trendTooltip").hidden)positionTrendTooltip();
-  };
+  chartViewport.onscroll=dismissFloatingTooltips;
   svg.on("pointermove",event=>{
+    if(event.pointerType==="touch")return;
     const [px]=d3.pointer(event,svg.node());
     if(px<margin.left||px>w-margin.right)return;
     showYear(Math.round(x.invert(px)));
@@ -1587,22 +1694,21 @@ function renderPilotWeeklyChart(schoolId,year) {
   if (weeklySeriesSchoolId!==schoolId){
     hiddenWeeklySeries.clear();weeklySeriesSchoolId=schoolId;
   }
-  const points=year!==2026?[]:PUBLIC_BUILD
-    ? weeklyReportedGroupSeries([schoolId],publicOfficialGames,publicWeeklyThroughWeek)
-    : pilotWeekly.filter(r=>Number(r.school_id)===schoolId && Number(r.reported_home_games)>0)
+  const weeklySchoolPoints=id=>year!==2026?[]:PUBLIC_BUILD
+    ? weeklyReportedGroupSeries([id],publicOfficialGames,publicWeeklyThroughWeek)
+    : pilotWeekly.filter(r=>Number(r.school_id)===id && Number(r.reported_home_games)>0)
       .map(r=>({week:Number(r.week),average:Number(r.average_reported_attendance),
         reportedGames:Number(r.reported_home_games),reportingSchools:1}))
       .filter(r=>Number.isFinite(r.average)).sort((a,b)=>a.week-b.week);
+  const points=weeklySchoolPoints(schoolId);
   wrap.hidden=!points.length;
   if (!points.length) return;
-  const second=PUBLIC_BUILD?cohort.find(s=>Number(s.school_id)===state.schoolBId):null;
-  const secondPalette=second?teamPalette(state.schoolBId):null;
-  const sameColors=secondPalette && colorsTooSimilar(palette.primary,secondPalette.primary);
   const series=[
-    {key:"school",name:school.school_name,points,color:palette.primary,width:2.7,primary:true},
-    ...(second?[{key:"school-b",name:second.school_name,
-      points:weeklyReportedGroupSeries([state.schoolBId],publicOfficialGames,publicWeeklyThroughWeek),
-      color:secondPalette.primary,width:2.5,dash:sameColors?"7 3":null}]:[]),
+    ...comparisonSchoolVisuals().map(({school:entry,id,palette:colors,dash},i)=>({
+      key:i===0?"school":"school:"+id,name:entry.school_name,
+      points:i===0?points:weeklySchoolPoints(id),color:colors.primary,
+      width:i===0?2.7:2.5,dash,primary:i===0,
+    })),
     ...(PUBLIC_BUILD?state.benchmarks.map(entry=>({
       key:"benchmark:"+entry.key,name:benchmarkName(entry,school),
       points:weeklyReportedGroupSeries(weeklyBenchmarkSchoolIds(entry,school,cohort,state.groupIds),
@@ -1612,7 +1718,7 @@ function renderPilotWeeklyChart(schoolId,year) {
   ];
   const plotted=series.filter(item=>item.points.length>0);
   // Height follows selected series, not the temporarily hidden legend state.
-  const width=1050,height=plotted.length>=3?230:178;
+  const width=1050,height=plotted.length<=2?178:230+Math.max(0,plotted.length-3)*28;
   const margin={top:24,right:95,bottom:33,left:68};
   svg.attr("viewBox","0 0 "+width+" "+height);
   const visible=plotted.filter(item=>!hiddenWeeklySeries.has(item.key));
@@ -1640,9 +1746,9 @@ function renderPilotWeeklyChart(schoolId,year) {
       .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average))
       .attr("r",item.primary?3.8:2.6)
       .attr("fill",item.color).append("title")
-      .text(d=>item.name+" · W"+d.week+": "+attendanceFormat(d.average)+
-        " fans/game (cumulative · "+d.reportedGames+" game"+
-        (d.reportedGames===1?"":"s")+" · "+d.reportingSchools+" school"+
+      .text(d=>item.name+", W"+d.week+": "+attendanceFormat(d.average)+
+        " fans/game (cumulative: "+d.reportedGames+" game"+
+        (d.reportedGames===1?"":"s")+"; "+d.reportingSchools+" school"+
         (d.reportingSchools===1?"":"s")+" reporting)");
   }
   if(!hiddenWeeklySeries.has("school")){
@@ -1686,8 +1792,8 @@ function renderPilotWeeklyChart(schoolId,year) {
   svg.attr("aria-label","2026 cumulative reported home attendance: "+
     visible.map(item=>item.name).join(", ")+"; provisional");
   $("weeklyChartCaption").textContent=PUBLIC_BUILD
-    ? "2026 cumulative fans per home game · reported games only · provisional"
-    : "2026 cumulative average by week · provisional regular-season reports";
+    ? "2026 cumulative fans per home game (reported games only; provisional)"
+    : "2026 cumulative average by week (provisional regular-season reports)";
 }
 
 /** Public 2026 chart values originate in separately verified official reports. */
@@ -1703,7 +1809,7 @@ function renderPublicOfficialGameBars(schoolId) {
     const displayDate=new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US",{
       month:"short",day:"numeric",timeZone:"UTC"
     });
-    dateCell.textContent=`W${week} · ${displayDate}`;
+    dateCell.textContent=`W${week}: ${displayDate}`;
     dateCell.setAttribute("aria-label",`${date}, week ${week}`);
     const opponentCell=document.createElement("td");
     opponentCell.textContent=opponent;
@@ -1774,7 +1880,7 @@ async function renderCfbdGameDetails() {
   const name=cohort.find(s=>Number(s.school_id)===schoolId)?.school_name || "School";
   const palette=teamPalette(schoolId);
   $("gameDetailTitle").textContent=PUBLIC_BUILD
-    ? `${name} · 2026 Home Attendance` : `${name} · ${year} games`;
+    ? `${name}: 2026 Home Attendance` : `${name}: ${year} games`;
   $("gameDetailRows").replaceChildren();
   section.style.setProperty("--school-primary",palette.primary);
   $("weeklyTrendWrap").hidden=true;
@@ -1790,7 +1896,7 @@ async function renderCfbdGameDetails() {
     $("gameDetailStatus").textContent=(count
       ? `${count} home games reported`
       : "No home games reported yet")+
-      ` · Provisional${dataThrough?` · Data through ${dataThrough}`:""}`;
+      ` (provisional${dataThrough?`; data through ${dataThrough}`:""})`;
     renderPilotWeeklyChart(schoolId,2026);
     return;
   }
@@ -1820,14 +1926,14 @@ async function renderCfbdGameDetails() {
   officialLink.href=official.length?official[0].source_url:"https://collegefootballdata.com/";
   officialLink.textContent=official.length?(official[0].source_type==="official_school_2026"?"University game results":"Conference game reports"):"CFBD game data";
   sourceNote.textContent=official.length ?
-    "2026 provisional official game reports · CFBD regular-season home-game schedule; NCAA final annual may differ." :
-    "CFBD game reports · separate from annual school totals.";
+    "2026 provisional official game reports. CFBD regular-season home-game schedule; NCAA final annual may differ." :
+    "CFBD game reports, separate from annual school totals.";
   sourceNote.textContent+=" Sellout badges require an explicit university confirmation; unmarked games may also have sold out."
   renderPilotWeeklyChart(schoolId,year);
   const missing=rows.length-known.length;
   $("gameDetailStatus").textContent=rows.length ?
-    rows.length+(year===2026?" completed regular-season home games (provisional)":" completed home games")+" · "+known.length+" with reported attendance"+
-      (missing?" · "+missing+" unavailable":"") :
+    rows.length+(year===2026?" completed regular-season home games (provisional)":" completed home games")+"; "+known.length+" with reported attendance"+
+      (missing?" ("+missing+" unavailable)":"") :
     "No completed non-neutral regular-season home games found.";
   if (!rows.length) return;
   const maxGame = d3.max(known,d=>d.attendance) || 1;
@@ -1851,7 +1957,7 @@ async function renderCfbdGameDetails() {
       badge.target="_blank";
       badge.rel="noopener noreferrer";
       badge.textContent="Sellout";
-      badge.title="Officially verified sellout · view university source";
+      badge.title="Officially verified sellout. View university source.";
       badge.setAttribute("aria-label","Verified sellout: "+name+" vs "+game.opponent+
         " on "+localHomeGameDate(game.startDate,schoolId)+"; open university source");
       cell.append(badge);
@@ -1876,8 +1982,22 @@ window.addEventListener("attendance-theme-change", () => {
 
 function render() {
   if(state.schoolId===null){hiddenWeeklySeries.clear();weeklySeriesSchoolId=null;}
+  const allMapPoints=selectedPrograms(cohort,schoolIndex,locations,{...state,conference:"All"});
+  mappedProgramCount=allMapPoints.filter(p=>p.mappable && projection([p.geo.longitude,p.geo.latitude])).length;
+  mapPoints=allMapPoints.filter(point=>meetsMinimumAttendance(point,state.minimumAttendance));
+  const qualifyingIds=new Set(mapPoints.map(point=>point.school_id));
+  // A filtered-out school must not remain selected or selectable in the map picker.
+  if(state.schoolId!==null && !qualifyingIds.has(state.schoolId)){
+    hideTooltip();
+    state.schoolId=null;state.comparisonSchoolIds=[];state.mapFocus="all";
+    $("schoolBFilter").value="";
+    hiddenWeeklySeries.clear();weeklySeriesSchoolId=null;
+  }
+  for(const option of $("schoolFilter").options){
+    if(option.value)option.disabled=!qualifyingIds.has(Number(option.value));
+  }
   syncMapFocusControls();
-  mapPoints=selectedPrograms(cohort,schoolIndex,locations,{...state,conference:"All"});
+  syncMinimumAttendanceControls();
   const ids=activeFocusIds();
   currentPoints=ids && state.mapFocus!=="school"
     ? mapPoints.filter(p=>ids.has(p.school_id)) : mapPoints;
