@@ -8,13 +8,13 @@
   <title>The United States of College Football</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=099dc00a0003">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=optional" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=8f8840ebf4d0">
   <script src="./theme.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
   <script>window.__PUBLIC_ATTENDANCE_BUILD__ = true;</script>
-  <script type="module" src="./app.js?v=dbc655a1a07d"></script>
+  <script type="module" src="./app.js?v=7543ce7b629c"></script>
 </head>
 <body>
 <a class="skip-link" href="#explore">Skip to explorer</a>
@@ -53,7 +53,7 @@
     </div>
   </section>
   <p id="mapFocusNote" class="context-note" role="status" hidden></p>
-  <p id="comparisonNotice" class="context-note" role="status"></p>
+  <p id="comparisonNotice" class="context-note" role="status" hidden></p>
 
   <section class="map-layout" aria-label="Geographic attendance explorer">
     <div class="map-card">
@@ -77,16 +77,16 @@
         </div>
         <span id="mapStatus" class="map-footnote">Loading attendance data…</span>
       </div>
-      <div class="map-length-key" id="mapLengthKey" aria-label="Examples of arrow length" hidden>
+      <div class="map-length-key" id="mapLengthKey" aria-label="Examples of arrow length" data-loading="true">
         <span class="map-length-lead">Arrow length:</span>
         <div class="map-length-samples" id="mapLengthSamples"></div>
       </div>
       <p class="legend-explainer" id="markerScaleLegend" hidden></p>
     </div>
     <aside class="map-sidebar" aria-label="Key attendance statistics">
-      <section class="movers-section" id="moversSection" aria-labelledby="moversTitle" hidden>
+      <section class="movers-section" id="moversSection" aria-labelledby="moversTitle" aria-busy="true">
         <div class="movers-heading">
-          <h2 id="moversTitle">Key Stats</h2>
+          <h2 id="moversTitle">Key Stats: 2019 vs. 2025</h2>
           <div class="mover-type-switch" role="group" aria-label="Rank schools or conferences">
             <button type="button" class="mover-type-button active" data-mover-type="school" aria-pressed="true">Schools</button>
             <button type="button" class="mover-type-button" data-mover-type="conference" aria-pressed="false">Conferences</button>
@@ -96,7 +96,7 @@
             <option value="historical">Actual members each season</option>
           </select></label>
         </div>
-        <p id="moversSubtitle"></p>
+        <p id="moversSubtitle" hidden></p>
         <section class="stats-grid" aria-label="Attendance overview">
     <div class="stat"><span id="baselineAverageLabel">2019 AVG / GAME</span><strong id="baselineAverage">—</strong></div>
     <div class="stat"><span id="targetAverageLabel">2025 AVG / GAME</span><strong id="targetAverage">—</strong></div>
@@ -112,8 +112,8 @@
         <div class="mover-list">
           <button type="button" id="largestRise" class="mover-item"><span class="mover-label">Biggest increase</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
           <button type="button" id="largestFall" class="mover-item"><span class="mover-label">Biggest decrease</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
-          <button type="button" id="highestAverage" class="mover-item"><span class="mover-label">Highest attendance (2026 YTD)</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
-          <button type="button" id="lowestAverage" class="mover-item"><span class="mover-label">Lowest attendance (2026 YTD)</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
+          <button type="button" id="highestAverage" class="mover-item"><span class="mover-label">Highest attendance (2025)</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
+          <button type="button" id="lowestAverage" class="mover-item"><span class="mover-label">Lowest attendance (2025)</span><span class="mover-school"></span><strong class="mover-value"></strong></button>
         </div>
       </section>
     <section class="school-card sidebar-school-card" id="selectedSchoolCard" aria-label="Selected school details" hidden>

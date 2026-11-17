@@ -771,6 +771,7 @@ function renderMagnitudeKey() {
     const label=document.createElement("span");label.textContent=example.label;
     item.append(svg,label);samples.append(item);
   }
+  key.removeAttribute("data-loading");
 }
 
 function renderMap() {
@@ -973,6 +974,7 @@ function renderMovers() {
     ? `${state.target}${state.target===2026?" YTD":""}`
     : `${state.target===2026?2025:state.baseline} vs. ${state.target===2026?"2026 YTD":state.target}`);
   section.hidden=false;
+  section.setAttribute("aria-busy","false");
   $("keyStatsMembershipField").hidden=!conferences;
   $("keyStatsMembership").value=state.keyStatsMembership;
   for(const button of document.querySelectorAll(".mover-type-button")){
