@@ -965,6 +965,10 @@ function renderMovers() {
   document.querySelector(".mover-type-switch").hidden=!canRankConferences;
   if(!canRankConferences)state.moverType="school";
   const conferences=state.moverType==="conference";
+  const attendanceYear=state.target===2026?"2026 YTD":String(state.target);
+  for(const [id,kind] of [["highestAverage","Highest"],["lowestAverage","Lowest"]]){
+    $(id).querySelector(".mover-label").textContent=`${kind} attendance (${attendanceYear})`;
+  }
   $("moversTitle").textContent="Key Stats: "+(level
     ? `${state.target}${state.target===2026?" YTD":""}`
     : `${state.target===2026?2025:state.baseline} vs. ${state.target===2026?"2026 YTD":state.target}`);
