@@ -605,3 +605,11 @@ button.weekly-series-item:focus-visible{outline:2px solid var(--accent,#177e7a);
 
 /* Threshold spans the existing controls grid, without reserved empty cells. */
 @media(max-width:620px){.attendance-minimum{display:grid;grid-template-columns:minmax(0,1fr) 95px auto;align-items:center}.attendance-minimum label{grid-column:1/-1}.attendance-minimum input[type="range"]{width:100%;min-width:0}.attendance-minimum input[type="number"]{width:100%}}
+
+/* Individual 2026 game crowds are independent of cumulative average lines. */
+.game-chart-wrap{position:relative}
+.weekly-actual-point{pointer-events:none}
+.weekly-actual-key{display:inline-block;width:9px;height:9px;flex:none;border-radius:50%;border:1px solid var(--paper,#fff);box-shadow:0 0 0 1px #8885}
+.weekly-tooltip{right:auto;top:8px;max-width:245px;min-width:205px}
+#weeklyAverageChart{cursor:crosshair}
+#weeklyAverageChart:focus-visible{outline:2px solid var(--rise);outline-offset:-2px}

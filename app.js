@@ -20,17 +20,42 @@ const state = { baseline: 2019, target: 2025, metric: "pct", conference: "All", 
   benchmarks:[{key:"historical",type:"historical"}] };
 const MAX_COMPARISON_SCHOOLS=3;
 const $ = id => document.getElementById(id);
+let trendTooltipPinned=false;
+let weeklyTooltipPinned=false;
 function dismissFloatingTooltips() {
-  for (const id of ["trendTooltip","quickTrendTooltip","mapTooltip"]) {
+  for (const id of ["trendTooltip","quickTrendTooltip","mapTooltip","weeklyTooltip"]) {
+    if ((id==="trendTooltip" && trendTooltipPinned) ||
+        (id==="weeklyTooltip" && weeklyTooltipPinned)) continue;
     const tooltip=$(id);
     if (tooltip) tooltip.hidden=true;
   }
-  const hover=document.querySelector("#trendChart .trend-hover");
-  if (hover) hover.style.display="none";
+  if (!trendTooltipPinned) {
+    const hover=document.querySelector("#trendChart .trend-hover");
+    if (hover) hover.style.display="none";
+  }
+  if (!weeklyTooltipPinned) {
+    const hover=document.querySelector("#weeklyAverageChart .weekly-hover");
+    if (hover) hover.style.display="none";
+  }
 }
 // Touch scrolling on mobile does not reliably emit pointerleave on a chart.
 document.addEventListener("scroll",dismissFloatingTooltips,{capture:true,passive:true});
 document.addEventListener("touchmove",dismissFloatingTooltips,{passive:true});
+// A click inside either plot changes its selection; clicking elsewhere dismisses it.
+document.addEventListener("click",event=>{
+  if (!event.target.closest("#trendChart, #trendTooltip")) {
+    trendTooltipPinned=false;
+    const tooltip=$("trendTooltip");if(tooltip)tooltip.hidden=true;
+    const hover=document.querySelector("#trendChart .trend-hover");
+    if(hover)hover.style.display="none";
+  }
+  if (!event.target.closest("#weeklyAverageChart, #weeklyTooltip")) {
+    weeklyTooltipPinned=false;
+    const tooltip=$("weeklyTooltip");if(tooltip)tooltip.hidden=true;
+    const hover=document.querySelector("#weeklyAverageChart .weekly-hover");
+    if(hover)hover.style.display="none";
+  }
+});
 const themeColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function formattedChange(value,metric) {
   // Keep the underlying sign when a tiny nonzero percentage rounds to ±0.0%.
@@ -1414,6 +1439,7 @@ function comparisonSchoolVisuals() {
 }
 
 function renderTrendChart() {
+  trendTooltipPinned=false;
   const section=document.querySelector(".trends-section");
   const selected=cohort.find(s=>Number(s.school_id)===state.schoolId);
   if(!selected){section.hidden=true;return;}
@@ -1669,22 +1695,30 @@ function renderTrendChart() {
   }
   chartViewport.onscroll=dismissFloatingTooltips;
   svg.on("pointermove",event=>{
-    if(event.pointerType==="touch")return;
+    if(trendTooltipPinned||event.pointerType==="touch")return;
     const [px]=d3.pointer(event,svg.node());
     if(px<margin.left||px>w-margin.right)return;
     showYear(Math.round(x.invert(px)));
   }).on("pointerleave",()=>{
-    hover.style("display","none");$("trendTooltip").hidden=true;
+    if (!trendTooltipPinned) {
+      hover.style("display","none");$("trendTooltip").hidden=true;
+    }
   }).on("click",event=>{
     const [px]=d3.pointer(event,svg.node());
-    if(px>=margin.left && px<=w-margin.right)showYear(Math.round(x.invert(px)));
+    if(px>=margin.left && px<=w-margin.right){
+      trendTooltipPinned=true;
+      showYear(Math.round(x.invert(px)));
+    }
   }).on("keydown",event=>{
     if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
     event.preventDefault();
+    trendTooltipPinned=true;
     showYear(event.key==="Home"?FIRST_YEAR:event.key==="End"?LAST_YEAR:
       hoverYear+(event.key==="ArrowRight"?1:-1));
   }).on("focus",()=>showYear(hoverYear)).on("blur",()=>{
-    hover.style("display","none");$("trendTooltip").hidden=true;
+    if(!trendTooltipPinned){
+      hover.style("display","none");$("trendTooltip").hidden=true;
+    }
   });
   $("trendTooltip").hidden=true;
   renderTrendStats(series);
@@ -1693,11 +1727,14 @@ function renderTrendChart() {
 /** Cumulative 2026 average after each completed CFBD week, from official pilot reports. */
 function renderPilotWeeklyChart(schoolId,year) {
   const wrap=$("weeklyTrendWrap"),svg=d3.select("#weeklyAverageChart");
+  weeklyTooltipPinned=false;
   svg.selectAll("*").remove();
+  const tooltip=$("weeklyTooltip");
+  if(tooltip)tooltip.hidden=true;
   const legend=$("weeklySeriesKey");legend.replaceChildren();
   const school=cohort.find(s=>Number(s.school_id)===schoolId);
   const palette=teamPalette(schoolId);
-  if (weeklySeriesSchoolId!==schoolId){
+  if(weeklySeriesSchoolId!==schoolId){
     hiddenWeeklySeries.clear();weeklySeriesSchoolId=schoolId;
   }
   const weeklySchoolPoints=id=>year!==2026?[]:PUBLIC_BUILD
@@ -1707,8 +1744,23 @@ function renderPilotWeeklyChart(schoolId,year) {
         reportedGames:Number(r.reported_home_games),reportingSchools:1}))
       .filter(r=>Number.isFinite(r.average)).sort((a,b)=>a.week-b.week);
   const points=weeklySchoolPoints(schoolId);
-  wrap.hidden=!points.length;
-  if (!points.length) return;
+  const official=PUBLIC_BUILD?(publicOfficialGames.get(schoolId)||[]):
+    pilotGames.filter(row=>Number(row.school_id)===schoolId &&
+      row.attendance!=="" && Number.isFinite(Number(row.attendance)))
+      .map(row=>[Number(row.week),row.game_date,row.opponent,
+        Number(row.attendance),row.source_url]);
+  const actualGames=official.map(([week,date,opponent,attendance])=>({
+    week:Number(week),date,opponent:String(opponent||"Home game"),
+    attendance:Number(attendance)
+  })).filter(g=>Number.isInteger(g.week)&&g.week>=0&&Number.isFinite(g.attendance))
+    .sort((a,b)=>a.week-b.week||String(a.date).localeCompare(String(b.date)));
+  // On private diagnostics, the weekly summary may outlive the per-game pilot.
+  // In that case retain an accurate running-average chart without invented crowds.
+  const games=actualGames.length?actualGames:
+    points.filter((p,i)=>i===0||p.reportedGames!==points[i-1].reportedGames)
+      .map(p=>({week:p.week,date:null,opponent:"W"+p.week,attendance:null}));
+  wrap.hidden=!points.length||!games.length;
+  if(wrap.hidden)return;
   const series=[
     ...comparisonSchoolVisuals().map(({school:entry,id,palette:colors,dash},i)=>({
       key:i===0?"school":"school:"+id,name:entry.school_name,
@@ -1716,40 +1768,52 @@ function renderPilotWeeklyChart(schoolId,year) {
       width:i===0?2.7:2.5,dash,primary:i===0,
     })),
     ...(PUBLIC_BUILD?state.benchmarks.map(entry=>({
-      key:"benchmark:"+entry.key,name:benchmarkName(entry,school),
+      key:"benchmark:"+entry.key,
+      // In the 2026 view, "historical" resolves to today's conference cohort.
+      name:entry.type==="historical"?school.conference_2026+" (2026 members)":
+        benchmarkName(entry,school),
       points:weeklyReportedGroupSeries(weeklyBenchmarkSchoolIds(entry,school,cohort,state.groupIds),
         publicOfficialGames,publicWeeklyThroughWeek),
       color:benchmarkColor(entry,school),dash:"5 4",width:1.9,
     })):[]),
   ];
   const plotted=series.filter(item=>item.points.length>0);
-  // Height follows selected series, not the temporarily hidden legend state.
   const width=1050,height=plotted.length<=2?178:230+Math.max(0,plotted.length-3)*28;
-  const margin={top:24,right:95,bottom:33,left:68};
+  const margin={top:24,right:95,bottom:38,left:68};
   svg.attr("viewBox","0 0 "+width+" "+height);
   const visible=plotted.filter(item=>!hiddenWeeklySeries.has(item.key));
-  const values=visible.flatMap(item=>item.points);
-  const min=d3.min(values,d=>d.average),max=d3.max(values,d=>d.average);
-  const pad=Math.max(1800,(max-min)*.22);
-  const lastWeek=d3.max(plotted.flatMap(item=>item.points),d=>d.week)||8;
-  const x=d3.scaleLinear().domain([0,lastWeek]).range([margin.left,width-margin.right]);
+  const samples=item=>games.map((game,i)=>{
+    const last=item.points.filter(p=>p.week<=game.week).at(-1);
+    return last?{...last,gameIndex:i}:null;
+  }).filter(Boolean);
+  const values=[
+    ...visible.flatMap(item=>samples(item).map(p=>p.average)),
+    ...games.map(g=>g.attendance).filter(Number.isFinite),
+  ];
+  const min=d3.min(values)||0,max=d3.max(values)||80000;
+  const pad=Math.max(1800,(max-min)*.12);
+  const x=d3.scalePoint().domain(games.map((_,i)=>i))
+    .range([margin.left,width-margin.right]).padding(.45);
   const y=d3.scaleLinear().domain([Math.max(0,min-pad),max+pad])
     .range([height-margin.bottom,margin.top]);
+  const axisLabel=game=>game.opponent.length>15?
+    game.opponent.slice(0,14)+"…":game.opponent;
   svg.append("g").attr("class","chart-axis").attr("transform",
     "translate(0,"+(height-margin.bottom)+")")
-    .call(d3.axisBottom(x).ticks(8).tickFormat(d=>Number.isInteger(d)?"W"+d:""));
+    .call(d3.axisBottom(x).tickSizeOuter(0).tickFormat(i=>axisLabel(games[i])));
   svg.append("g").attr("class","chart-axis").attr("transform",
     "translate("+margin.left+",0)")
     .call(d3.axisLeft(y).ticks(height>178?4:3).tickFormat(d=>Math.round(d/1000)+"k"));
-  const line=d3.line().x(d=>x(d.week)).y(d=>y(d.average));
+  const line=d3.line().x(d=>x(d.gameIndex)).y(d=>y(d.average));
   for(const item of visible){
+    const data=samples(item);
     const layer=svg.append("g").datum(item).attr("class","weekly-series");
-    layer.append("path").datum(item.points).attr("class","chart-line")
+    layer.append("path").datum(data).attr("class","chart-line")
       .attr("fill","none").attr("stroke",item.color)
       .attr("stroke-width",item.width).attr("stroke-dasharray",item.dash||null)
       .attr("d",line);
-    layer.selectAll("circle").data(item.points).join("circle")
-      .attr("cx",d=>x(d.week)).attr("cy",d=>y(d.average))
+    layer.selectAll("circle").data(data).join("circle")
+      .attr("cx",d=>x(d.gameIndex)).attr("cy",d=>y(d.average))
       .attr("r",item.primary?3.8:2.6)
       .attr("fill",item.color).append("title")
       .text(d=>item.name+", W"+d.week+": "+attendanceFormat(d.average)+
@@ -1757,10 +1821,22 @@ function renderPilotWeeklyChart(schoolId,year) {
         (d.reportedGames===1?"":"s")+"; "+d.reportingSchools+" school"+
         (d.reportingSchools===1?"":"s")+" reporting)");
   }
-  if(!hiddenWeeklySeries.has("school")){
-    const last=points.at(-1);
-    svg.append("text").attr("x",x(last.week)+9).attr("y",y(last.average)+4)
-      .attr("fill",palette.primary).attr("font-size",12).attr("font-weight",600)
+  // Isolated dots preserve each actual home crowd without suggesting that game
+  // attendance is itself a running-average line.
+  svg.append("g").attr("class","weekly-actual-series")
+    .selectAll("circle").data(games.map((game,i)=>({...game,index:i}))
+      .filter(game=>Number.isFinite(game.attendance))).join("circle")
+    .attr("class","weekly-actual-point")
+    .attr("cx",d=>x(d.index)).attr("cy",d=>y(d.attendance))
+    .attr("r",4.6).attr("fill",palette.secondary).attr("stroke",themeColor("--paper"))
+    .attr("stroke-width",1.5)
+    .append("title").text(d=>d.opponent+": "+attendanceFormat(d.attendance)+" fans");
+  const primary=visible.find(item=>item.primary);
+  if(primary){
+    const last=samples(primary).at(-1);
+    if(last)svg.append("text").attr("x",x(last.gameIndex)+9)
+      .attr("y",y(last.average)+4).attr("fill",palette.primary)
+      .attr("font-size",12).attr("font-weight",600)
       .text(attendanceFormat(last.average));
   }
   for(const item of series){
@@ -1795,11 +1871,103 @@ function renderPilotWeeklyChart(schoolId,year) {
     element.append(swatch,label);
     legend.append(element);
   }
-  svg.attr("aria-label","2026 cumulative reported home attendance: "+
-    visible.map(item=>item.name).join(", ")+"; provisional");
-  $("weeklyChartCaption").textContent=PUBLIC_BUILD
-    ? "2026 cumulative fans per home game (reported games only; provisional)"
-    : "2026 cumulative average by week (provisional regular-season reports)";
+  if(actualGames.length){
+    const dots=document.createElement("span");
+    dots.className="weekly-series-item";
+    const marker=document.createElement("i");
+    marker.className="weekly-actual-key";
+    marker.style.background=palette.secondary;
+    dots.append(marker,document.createTextNode(school.school_name+" individual games"));
+    legend.append(dots);
+  }
+  const hover=svg.append("g").attr("class","weekly-hover")
+    .attr("pointer-events","none").style("display","none");
+  const rule=hover.append("line").attr("class","chart-hover-rule")
+    .attr("y1",margin.top).attr("y2",height-margin.bottom);
+  const focusDots=hover.append("g");
+  const chartViewport=svg.node().parentElement;
+  let chosenIndex=0;
+  function positionTooltip(index){
+    const el=$("weeklyTooltip");
+    el.style.position="absolute";el.style.top="8px";
+    const scaledX=x(index)*svg.node().getBoundingClientRect().width/width;
+    const frameLeft=chartViewport.scrollLeft,frameWidth=chartViewport.clientWidth;
+    const preferred=scaledX+12+el.offsetWidth>frameLeft+frameWidth?
+      scaledX-el.offsetWidth-12:scaledX+12;
+    const maxLeft=frameLeft+frameWidth-el.offsetWidth-8;
+    el.style.left=Math.max(frameLeft+8,Math.min(preferred,maxLeft))+"px";
+  }
+  function showGame(index){
+    chosenIndex=Math.min(games.length-1,Math.max(0,index));
+    const game=games[chosenIndex];
+    rule.attr("x1",x(chosenIndex)).attr("x2",x(chosenIndex));
+    hover.style("display",null);
+    const atWeek=visible.map(item=>({item,
+      point:item.points.filter(p=>p.week<=game.week).at(-1)}))
+      .filter(row=>row.point);
+    focusDots.selectAll("circle").data(atWeek,row=>row.item.key).join("circle")
+      .attr("class","chart-hover-point").attr("cx",x(chosenIndex))
+      .attr("cy",row=>y(row.point.average)).attr("r",5)
+      .attr("fill",row=>row.item.color);
+    const el=$("weeklyTooltip");el.replaceChildren();
+    const head=document.createElement("strong");
+    let dateLabel="";
+    if(game.date){
+      const date=new Date(String(game.date).slice(0,10)+"T00:00:00Z");
+      if(!Number.isNaN(date.getTime()))
+        dateLabel=date.toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"UTC"});
+    }
+    head.textContent="W"+game.week+(dateLabel?" · "+dateLabel:"")+" · "+game.opponent;
+    el.append(head);
+    function addRow(label,value,color){
+      const row=document.createElement("div");row.className="tooltip-series";
+      const name=document.createElement("span");
+      const chip=document.createElement("i");chip.style.background=color;
+      name.append(chip,document.createTextNode(label));
+      const val=document.createElement("b");val.textContent=value;
+      row.append(name,val);el.append(row);
+    }
+    if(Number.isFinite(game.attendance))
+      addRow("Game attendance",attendanceFormat(game.attendance),palette.secondary);
+    for(const {item,point} of atWeek)
+      addRow(item.name+" running avg",attendanceFormat(point.average),item.color);
+    const note=document.createElement("small");
+    note.textContent="Reported 2026 home games only · provisional";
+    el.append(note);el.hidden=false;positionTooltip(chosenIndex);
+  }
+  function nearestIndex(px){
+    return games.reduce((best,_,i)=>Math.abs(x(i)-px)<Math.abs(x(best)-px)?i:best,0);
+  }
+  chartViewport.onscroll=()=>{
+    if(weeklyTooltipPinned && !tooltip.hidden)positionTooltip(chosenIndex);
+    else{hover.style("display","none");tooltip.hidden=true;}
+  };
+  svg.on("pointermove",event=>{
+    if(weeklyTooltipPinned||event.pointerType==="touch")return;
+    const [px]=d3.pointer(event,svg.node());
+    if(px<margin.left||px>width-margin.right)return;
+    showGame(nearestIndex(px));
+  }).on("pointerleave",()=>{
+    if(!weeklyTooltipPinned){hover.style("display","none");tooltip.hidden=true;}
+  }).on("click",event=>{
+    const [px]=d3.pointer(event,svg.node());
+    if(px>=margin.left&&px<=width-margin.right){
+      weeklyTooltipPinned=true;showGame(nearestIndex(px));
+    }
+  }).on("keydown",event=>{
+    if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+    event.preventDefault();weeklyTooltipPinned=true;
+    showGame(event.key==="Home"?0:event.key==="End"?games.length-1:
+      chosenIndex+(event.key==="ArrowRight"?1:-1));
+  }).on("focus",()=>{if(!weeklyTooltipPinned)showGame(chosenIndex);})
+    .on("blur",()=>{
+      if(!weeklyTooltipPinned){hover.style("display","none");tooltip.hidden=true;}
+    });
+  svg.attr("aria-label","2026 home games for "+school.school_name+
+    ": individual attendance dots and cumulative reported attendance lines. "+
+    "Click or use arrow keys to inspect a game.");
+  $("weeklyChartCaption").textContent=
+    "2026 Home Attendance · individual games and running averages (provisional)";
 }
 
 /** Public 2026 chart values originate in separately verified official reports. */
